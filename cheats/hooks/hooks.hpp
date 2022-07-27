@@ -20,6 +20,9 @@ enum hookIndexes
 	UNKOWN_FILESYS = 89,
 	UNVERIFIED_FILE_HASHES= 101,
 	UNK_FILE_CHECK = 128,
+	RENDER_VIEW = 6,
+	IS_HLTV = 93,
+	SCREEN_2D_EFFECT = 39,
 };
 
 class IPanel;
@@ -259,5 +262,36 @@ namespace hooks
 		static int __fastcall hooked(FAST_ARGS);
 		inline static fn original = nullptr;
 		static const int index = UNK_FILE_CHECK;
+	};
+
+	struct renderView
+	{
+		using fn = void(__thiscall*)(void*, const CViewSetup&, const CViewSetup&, int, int);
+		static void __fastcall hooked(FAST_ARGS, const CViewSetup& view, const CViewSetup& hud, int clearFlags, int whatToDraw);
+		inline static fn original = nullptr;
+		static const int index = RENDER_VIEW;
+	};
+
+	struct isHltv
+	{
+		using fn = bool(__thiscall*)(void*);
+		static bool __fastcall hooked(FAST_ARGS);
+		inline static fn original = nullptr;
+		static const int index = IS_HLTV;
+	};
+
+	struct screen2DEffect
+	{
+		using fn = void(__stdcall*)(CViewSetup*);
+		static void __stdcall hooked(CViewSetup* view);
+		inline static fn original = nullptr;
+		static const int index = SCREEN_2D_EFFECT;
+	};
+
+	struct isDepthOfField
+	{
+		using fn = bool(__stdcall*)();
+		static bool __stdcall hooked();
+		inline static fn original = nullptr;
 	};
 }

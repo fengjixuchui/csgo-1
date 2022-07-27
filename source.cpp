@@ -17,6 +17,8 @@
 #include "utilities/res.hpp"
 #include "cheats/features/visuals/radar.hpp"
 #include "cheats/features/visuals/world.hpp"
+#include "cheats/features/visuals/mirrorCam.hpp"
+#include "cheats/game.hpp"
 
 #include <thread>
 
@@ -45,6 +47,7 @@ DWORD WINAPI init(PVOID instance)
             XOR("default.cfg"), XOR("load.LOAD"),
             std::filesystem::path{ XOR("Bartis_internal") } / XOR("csgo"),
             std::filesystem::path{ XOR("Bartis_internal") } / XOR("csgo") / XOR("utility"));
+        game::localPlayer.init();
         world.initSkyboxes();
         interfaces::init();
         netvarMan.init();
@@ -55,7 +58,9 @@ DWORD WINAPI init(PVOID instance)
         callbacks.init();
         callbacks.run();
         radar.initRetAddr();
+        mCam.init();
         hooks::init();
+        world.initEffects();
     }
     catch (const std::runtime_error& err)
     {

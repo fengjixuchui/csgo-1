@@ -6,6 +6,7 @@
 #include "../CUtlVector.hpp"
 #include "../vars.hpp"
 #include "IDXandPaterrns.hpp"
+#include "../Enums.hpp"
 
 #include "../math/Vector.hpp"
 #include "../math/matrix.hpp"
@@ -43,21 +44,28 @@ public:
 	NETVAR(float, m_flSimulationTime, "DT_BasePlayer", "m_flSimulationTime");
 	NETVAR(float, m_flMaxspeed, "DT_BasePlayer", "m_flMaxspeed");
 	NETVAR_ADDR(int, m_nRenderMode, "DT_BasePlayer", "m_nRenderMode", 0x1);
-	NETVAR_ADDR(Matrix3x4, m_rgflCoordinateFrame, "DT_BaseEntity", "m_CollisionGroup", -0x30);
+	//NETVAR_ADDR(Matrix3x4, m_rgflCoordinateFrame, "DT_BaseEntity", "m_CollisionGroup", -0x30);
+	NETVAR(PrecipitationType_t, m_nPrecipType, "DT_Precipitation", "m_nPrecipType");
 
-	VFUNC(Vector&, absOrigin, 10, (), (this));
-	VFUNC(Vector&, absAngles, 11, (), (this));
-	VFUNC(ClientClass*, clientClass, 2, (), (this + NETWORKABLE));
-	VFUNC(ICollideable*, collideable, 3, (), (this));
-	VFUNC(int, getIndex, 10, (), (this + NETWORKABLE));
-	VFUNC(void, getRenderBounds, 17, (Vector& mins, Vector& maxs), (this + RENDERABLE, std::ref(mins), std::ref(maxs)));
+	VFUNC(Vector&, absOrigin, ABS_ORIGIN, (), (this));
+	VFUNC(Vector&, absAngles, ABS_ANGLE, (), (this));
+	VFUNC(ClientClass*, clientClass, CLIENT_CLASS, (), (this + NETWORKABLE));
+	VFUNC(ICollideable*, collideable, COLLIDEABLE, (), (this));
+	VFUNC(int, getIndex, GET_INDEX, (), (this + NETWORKABLE));
+	VFUNC(void, getRenderBounds, RENDER_BOUNDS, (Vector& mins, Vector& maxs), (this + RENDERABLE, std::ref(mins), std::ref(maxs)));
 	VFUNC(bool, isPlayer, ISPLAYER, (), (this));
 	VFUNC(bool, isWeapon, ISWEAPON, (), (this));
-	VFUNC(bool, setupBones, 13, (Matrix3x4* out, int maxBones, int mask, float time), (this + RENDERABLE, out, maxBones, mask, time));
+	VFUNC(bool, setupBones, SETUP_BONES, (Matrix3x4* out, int maxBones, int mask, float time), (this + RENDERABLE, out, maxBones, mask, time));
 	bool setupBonesShort(Matrix3x4* out, int maxBones, int mask, float time);
-	VFUNC(Model_t*, getModel, 8, (), (this + RENDERABLE));
-	VFUNC(int, drawModel, 9, (int flags, uint8_t alpha), (this + RENDERABLE, flags, alpha));
-	VFUNC(bool, isDormant, 9, (), (this + NETWORKABLE));
+	VFUNC(Model_t*, getModel, GET_MODEL, (), (this + RENDERABLE));
+	VFUNC(int, drawModel, DRAW_MODEL, (int flags, uint8_t alpha), (this + RENDERABLE, flags, alpha));
+	VFUNC(bool, isDormant, IS_DORMANT, (), (this + NETWORKABLE));
+	VFUNC(Matrix3x4&, renderableToWorldTransform, RENDERABLE_TO_WORLD, (), (this + RENDERABLE));
+	VFUNC(void, release, RELEASE, (), (this + NETWORKABLE));
+	VFUNC(void, onPreDataChanged, PRE_DATA_CHANGED, (DataUpdateType_t type), (this + NETWORKABLE, type));
+	VFUNC(void, onDataChanged, DATA_CHANGED, (DataUpdateType_t type), (this + NETWORKABLE, type));
+	VFUNC(void, preDataUpdate, PRE_DATA_UPDATE, (DataUpdateType_t type), (this + NETWORKABLE, type));
+	VFUNC(void, postDataUpdate, POST_DATA_UPDATE, (DataUpdateType_t type), (this + NETWORKABLE, type));
 
 	_NODISCARD CUtlVector<Matrix3x4> m_CachedBoneData();
 	_NODISCARD Vector getAimPunch();
@@ -174,6 +182,7 @@ public:
 	NETVAR(int, m_hViewModel, "DT_BasePlayer", "m_hViewModel[0]");
 	NETVAR(float, m_flLowerBodyYawTarget, "DT_CSPlayer", "m_flLowerBodyYawTarget");
 	NETVAR(float, m_flFlashDuration, "DT_CSPlayer", "m_flFlashDuration");
+	NETVAR_ADDR(float, m_flNightVisionAlpha, "DT_CSPlayer", "m_flFlashDuration", -0x1C);
 	NETVAR(int, m_lifeState, "DT_CSPlayer", "m_lifeState");
 	NETVAR(int, m_fFlags, "DT_CSPlayer", "m_fFlags");
 	NETVAR(int, m_nHitboxSet, "DT_CSPlayer", "m_nHitboxSet");
@@ -207,6 +216,30 @@ public:
 	_NODISCARD bool isPossibleToSee(const Vector& pos);
 	// address as number
 	_NODISCARD uintptr_t getLiteralAddress();
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////
+
+class FogController_t : public Entity_t
+{
+public:
+	NETVAR(bool, m_fogenable, "DT_FogController", "m_fog.enable");
+	NETVAR(float, m_fogstart, "DT_FogController", "m_fog.start");
+	NETVAR(float, m_fogend, "DT_FogController", "m_fog.end");
+	NETVAR(float, m_fogmaxdensity, "DT_FogController", "m_fog.maxdensity");
+	NETVAR(int, m_fogcolorPrimary, "DT_FogController", "m_fog.colorPrimary");
+	NETVAR(int, m_fogcolorSecondary, "DT_FogController", "m_fog.colorSecondary");
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////
+
+class EnvTonemapController_t : public Entity_t
+{
+public:
+	NETVAR(bool, m_bUseCustomAutoExposureMin, "DT_EnvTonemapController", "m_bUseCustomAutoExposureMin");
+	NETVAR(bool, m_bUseCustomAutoExposureMax, "DT_EnvTonemapController", "m_bUseCustomAutoExposureMax");
+	NETVAR(float, m_flCustomAutoExposureMin, "DT_EnvTonemapController", "m_flCustomAutoExposureMin");
+	NETVAR(float, m_flCustomAutoExposureMax, "DT_EnvTonemapController", "m_flCustomAutoExposureMax");
 };
 
 #undef RENDERABLE

@@ -71,6 +71,7 @@ struct Variables
 	CONFIG_ADD_VARIABLE(CfgColor, cBox, Colors::Purple, "BOX color");
 	CONFIG_ADD_VARIABLE(CfgColor, cBoxFill, Color(0, 0, 0, 140), "BOX fill color");
 	CONFIG_ADD_VARIABLE(bool, bBoxMultiColor, false, "BOX multicolor FILL only");
+	CONFIG_ADD_VARIABLE(bool, bBoxOutlined, false, "BOX outlined lines");
 	CONFIG_ADD_VARIABLE(float, fBoxMultiColor, 1.0f, "BOX multicolor FILL color speed");
 	CONFIG_ADD_VARIABLE(bool, bDrawHealth, false, "draw health enabled");
 	CONFIG_ADD_VARIABLE(bool, bDrawArmor, false, "draw armor enabled");
@@ -151,7 +152,23 @@ struct Variables
 	CONFIG_ADD_VARIABLE(float, fDrawLocalSideImpacts, 3.0f, "draw impacts from local side time");
 	CONFIG_ADD_VARIABLE(CfgColor, cDrawLocalSideImpactsLine, Colors::Cyan, "draw impacts from local side color lines");
 	CONFIG_ADD_VARIABLE(CfgColor, cDrawLocalSideImpactsFill, Colors::Red, "draw impacts from local side color fill");
-
+	CONFIG_ADD_VARIABLE(bool, bFog, false, "fog enabled");
+	CONFIG_ADD_VARIABLE(float, fFogDistance, 500.0f, "fog distance");
+	CONFIG_ADD_VARIABLE(CfgColor, cFog, Colors::Purple, "fog color");
+	CONFIG_ADD_VARIABLE(int, iScreenEffect, 0, "screen effect index");
+	CONFIG_ADD_VARIABLE(float, fScreenEffectParam, 1.0f, "screen effect value");
+	CONFIG_ADD_VARIABLE(CfgColor, cScreenEffect, Colors::LightBlue, "screen color value");
+	CONFIG_ADD_VARIABLE(bool, bControlTone, false, "control tone enabled");
+	CONFIG_ADD_VARIABLE(float, fControlToneMin, 0.5f, "control tone min");
+	CONFIG_ADD_VARIABLE(float, fControlToneMax, 0.5f, "control tone max");
+	CONFIG_ADD_VARIABLE(bool, bWeather, false, "custom weather enabled");
+	CONFIG_ADD_VARIABLE(float, fWeatherRainLenght, 0.0f, "weather rain lenght");
+	CONFIG_ADD_VARIABLE(float, fWeatherRainSpeed, 0.0f, "weather rain speed");
+	CONFIG_ADD_VARIABLE(float, fWeatherRainRadius, 0.0f, "weather rain radius");
+	CONFIG_ADD_VARIABLE(float, fWeatherRainWidth, 0.0f, "weather rain width");
+	CONFIG_ADD_VARIABLE(float, fWeatherRainSideVel, 0.0f, "weather rain side vel");
+	CONFIG_ADD_VARIABLE(float, fWeatherRainAlpha, 0.0f, "weather rain alpha");
+	CONFIG_ADD_VARIABLE(float, fWeatherWindSpeed, 0.0f, "weather rain wind speed");
 
 	// MASTER SWITCHES
 
@@ -166,6 +183,9 @@ struct Variables
 	CONFIG_ADD_VARIABLE(float, fFOV, 0, "fov for +/- view");
 	CONFIG_ADD_VARIABLE(bool, bThirdp, false, "third person enabled");
 	CONFIG_ADD_VARIABLE(Key, kThirdp, Key(KeyMode::TOGGLE, 0x56), "third person key");
+	CONFIG_ADD_VARIABLE(float, fThirdpDistance, 200.0f, "third person distance");
+	CONFIG_ADD_VARIABLE(float, fThirdpX, 0.0f, "third personX");
+	CONFIG_ADD_VARIABLE(float, fThirdpY, 0.0f, "third personY");
 	CONFIG_ADD_VARIABLE(int, iCrosshair, 0, "crosshair mode");
 	CONFIG_ADD_VARIABLE(bool, bBacktrack, false, "backtrack enabled");
 	CONFIG_ADD_VARIABLE(float, fBacktrackTick, 200.0f, "backtrack amount of ticks to manipulate");
@@ -227,6 +247,29 @@ struct Variables
 	CONFIG_ADD_VARIABLE(float, fNadeTracerMaxDist, 30.0f, "max meters for nade tracer");
 	CONFIG_ADD_VARIABLE(bool, bNadeTracerWarn, false, "run nade tracer warning");
 	CONFIG_ADD_VARIABLE(bool, bDiscord, false, "run discord rpc");
+	CONFIG_ADD_VARIABLE(bool, bFreeLook, false, "freelook enable");
+	CONFIG_ADD_VARIABLE(Key, kFreeLook, Key(KeyMode::DOWN, VK_MENU), "freelook key");
+	CONFIG_ADD_VARIABLE(bool, bMirrorCam, false, "mirrorcam enable");
+	CONFIG_ADD_VARIABLE(bool, bMirrorCamOnKey, false, "mirrorcam enable only on key");
+	CONFIG_ADD_VARIABLE(Key, kMirrorCam, Key(KeyMode::TOGGLE, VK_F1), "mirrorcam key");
+	CONFIG_ADD_VARIABLE(bool, bFreeCam, false, "freecam enable");
+	CONFIG_ADD_VARIABLE(float, fFreeCam, 1.0f, "freecam speed");
+	CONFIG_ADD_VARIABLE(Key, kFreeCam, Key(KeyMode::TOGGLE, VK_F2), "freecam key");
+	CONFIG_ADD_VARIABLE(bool, bFlashlight, false, "flashlight enable");
+	CONFIG_ADD_VARIABLE(Key, kFlashlight, Key(KeyMode::TOGGLE, 0x4C), "flashlight key"); // L key
+	CONFIG_ADD_VARIABLE(bool, bFlashlightBigMode, false, "flashlight big mode enabled");
+	CONFIG_ADD_VARIABLE(float, fFlashlightFov, 30.0f, "flashlight fov");
+
+	// EFFECTS - TODO sort this
+
+	CONFIG_ADD_VARIABLE(bool, bMotionBlur, false, "motion blur enabled");
+	CONFIG_ADD_VARIABLE(bool, bMotionBlurForward, false, "motion blur enabled forward");
+	CONFIG_ADD_VARIABLE(float, fMotionBlurFallingIntensity, 1.0f, "motion blur FallingIntensity");
+	CONFIG_ADD_VARIABLE(float, fMotionBlurFallingMin, 10.0f, "motion blur FallingMin");
+	CONFIG_ADD_VARIABLE(float, fMotionBlurFallingMax, 20.0f, "motion blur FallingMax");
+	CONFIG_ADD_VARIABLE(float, fMotionBlurGlobalStrength, 1.0f, "motion blur GlobalStrength");
+	CONFIG_ADD_VARIABLE(float, fMotionBlurRotationIntensity, 0.15f, "motion blur RotationIntensity");
+	CONFIG_ADD_VARIABLE(float, fMotionBlurRollIntensity, 0.3f, "motion blur RollIntensity");
 
 	// STYLING
 

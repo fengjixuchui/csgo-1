@@ -10,7 +10,8 @@
 void ImGui::Hotkey(const char* label, Key* key, bool useExtended, const ImVec2& size)
 {
     ImGui::PushID(label);
-    ImGui::TextUnformatted(label);
+    if (std::strncmp(label, "##", 2))
+        ImGui::TextUnformatted(label, std::strstr(label, "##"));
 
     ImGui::SameLine();
 
@@ -59,7 +60,7 @@ void ImGui::Hotkey(const char* label, Key* key, bool useExtended, const ImVec2& 
         }
     }
 
-    PopID();
+    ImGui::PopID();
 }
 
 void ImGui::HelpMarker(const char* desc)
@@ -100,11 +101,14 @@ bool ImGui::ColorPicker(const char* label, CfgColor* clr)
     } ();
 
     ImGui::PushID(label);
+
     bool openPopup = ImGui::ColorButton("##colbut", ImVec4{ clr->getColor().r(), clr->getColor().g(), clr->getColor().b(), clr->getColor().a() }, pickerButtonFlags);
 
-    // calc spacing dynamically by CalcWordWrapPositionA?
-    ImGui::SameLine(0.0f, 5.0f);
-    ImGui::TextUnformatted(label);
+    if (std::strncmp(label, "##", 2))
+    {
+        ImGui::SameLine();
+        ImGui::TextUnformatted(label, std::strstr(label, "##"));
+    }
 
     if (openPopup)
         ImGui::OpenPopup("##colpop");
@@ -299,24 +303,24 @@ static bool arrGetter(void* data, int idx, const char** out)
     return true;
 }
 
-bool ImGui::Combo(const char* label, int* item, const std::span<const char*>& arr, const float width)
+bool ImGui::Combo(const char* label, int* item, std::span<const char*> arr, const float width)
 {
     bool ret = ImGui::Combo(label, item, arr.data(), arr.size(), width);
     return ret;
 }
 
-bool ImGui::Combo(const char* label, int* item, const std::span<const std::string>& arr, const float width)
+bool ImGui::Combo(const char* label, int* item, std::span<const std::string> arr, const float width)
 {
     bool ret = ImGui::Combo(label, item, &arrGetterStr, const_cast<void*>(reinterpret_cast<const void*>(&arr)), arr.size(), width);
     return ret;
 }
 
-bool ImGui::ListBox(const char* label, int* item, const std::span<const std::string>& arr, const int heightItem)
+bool ImGui::ListBox(const char* label, int* item, std::span<const std::string> arr, const int heightItem)
 {
     return ImGui::ListBox(label, item, &arrGetterStr, const_cast<void*>(reinterpret_cast<const void*>(&arr)), arr.size(), heightItem);
 }
 
-bool ImGui::ListBox(const char* label, int* item, const std::span<const char*>& arr, const int heightItem)
+bool ImGui::ListBox(const char* label, int* item, std::span<const char*> arr, const int heightItem)
 {
     return ImGui::ListBox(label, item, &arrGetter, const_cast<void*>(reinterpret_cast<const void*>(&arr)), arr.size(), heightItem);
 }

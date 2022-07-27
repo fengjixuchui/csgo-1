@@ -119,11 +119,12 @@ static void renderVisuals()
 			ImGui::BeginGroupPanel(XOR("Players"));
 			{
 				ImGui::Checkbox(XOR("Enabled"), &config.getRef<bool>(vars.bEsp));
-				ImGui::Combo(XOR("Boxes mode"), &config.getRef<int>(vars.iEsp), selections::espNames);
+				ImGui::Combo(XOR("Boxes mode"), &config.getRef<int>(vars.iEsp), selections::espNames, 40.0f);
 				ImGui::SameLine();
-				ImGui::ColorPicker(XOR("Box color"), &config.getRef<CfgColor>(vars.cBox));
+				ImGui::ColorPicker(XOR("color##box"), &config.getRef<CfgColor>(vars.cBox));
 				ImGui::SameLine();
-				ImGui::ColorPicker(XOR("Box color, filled"), &config.getRef<CfgColor>(vars.cBoxFill));
+				ImGui::ColorPicker(XOR("filled##box"), &config.getRef<CfgColor>(vars.cBoxFill));
+				ImGui::Checkbox(XOR("Outlined"), &config.getRef<bool>(vars.bBoxOutlined));
 				if (auto type = config.get<int>(vars.iEsp); type == E2T(BoxTypes::FILLED2D) || type == E2T(BoxTypes::FILLED3D))
 				{
 					ImGui::Checkbox(XOR("Multi color rect fill"), &config.getRef<bool>(vars.bBoxMultiColor));
@@ -307,6 +308,9 @@ static void renderMisc()
 				ImGui::Checkbox(XOR("Third Person"), &config.getRef<bool>(vars.bThirdp));
 				ImGui::SameLine();
 				ImGui::Hotkey(XOR(""), &config.getRef<Key>(vars.kThirdp));
+				ImGui::SliderFloat(XOR("Distance##thirdp"), &config.getRef<float>(vars.fThirdpDistance), 1.0f, 500.0f);
+				ImGui::SliderFloat(XOR("Extra X##thirdp"), &config.getRef<float>(vars.fThirdpX), -180.0f, 180.0f);
+				ImGui::SliderFloat(XOR("Extra Y##thirdp"), &config.getRef<float>(vars.fThirdpY), -180.0f, 180.0f);
 				ImGui::Combo(XOR("Crosshair type"), &config.getRef<int>(vars.iCrosshair), selections::crossHairNames);
 				ImGui::Checkbox(XOR("Enemy aiming warn"), &config.getRef<bool>(vars.bAimingWarn));
 			}
@@ -451,6 +455,47 @@ static void renderMisc()
 				ImGui::SameLine();
 				ImGui::ColorPicker(XOR("Client bullets fill color"), &config.getRef<CfgColor>(vars.cDrawClientSideImpactsFill));
 				ImGui::SliderFloat(XOR("Client bullets time"), &config.getRef<float>(vars.fDrawClientSideImpacts), 0.0f, 5.0f);
+				ImGui::Checkbox(XOR("Freelook"), &config.getRef<bool>(vars.bFreeLook));
+				ImGui::SameLine();
+				ImGui::Hotkey(XOR("##fl"), &config.getRef<Key>(vars.kFreeLook));
+				ImGui::Checkbox(XOR("FreeCam"), &config.getRef<bool>(vars.bFreeCam));
+				ImGui::SameLine();
+				ImGui::Hotkey("##fc", &config.getRef<Key>(vars.kFreeCam));
+				ImGui::SliderFloat(XOR("Speed##fc"), &config.getRef<float>(vars.fFreeCam), 1.0f, 20.0f);
+				ImGui::Checkbox(XOR("MirrorCam"), &config.getRef<bool>(vars.bMirrorCam));
+				ImGui::SameLine();
+				ImGui::Checkbox(XOR("On key##mcam"), &config.getRef<bool>(vars.bMirrorCamOnKey));
+				ImGui::SameLine();
+				ImGui::Hotkey(XOR("##mcam"), &config.getRef<Key>(vars.kMirrorCam));
+				ImGui::Checkbox(XOR("Flashlight"), &config.getRef<bool>(vars.bFlashlight));
+				ImGui::SameLine();
+				ImGui::Checkbox(XOR("Big mode"), &config.getRef<bool>(vars.bFlashlightBigMode));
+				ImGui::SameLine();
+				ImGui::Hotkey(XOR("key##flashl"), &config.getRef<Key>(vars.kFlashlight));
+				ImGui::SliderFloat(XOR("Flashlight FOV"), &config.getRef<float>(vars.fFlashlightFov), 1.0f, 100.0f);
+				ImGui::Checkbox(XOR("Fog enabled"), &config.getRef<bool>(vars.bFog));
+				ImGui::SliderFloat(XOR("Fog distance"), &config.getRef<float>(vars.fFogDistance), 1.0f, 1000.0f);
+				ImGui::ColorPicker(XOR("Fog color"), &config.getRef<CfgColor>(vars.cFog));
+				ImGui::Combo(XOR("Screen effect"), &config.getRef<int>(vars.iScreenEffect), selections::screenEffects);
+				ImGui::SliderFloat(XOR("Param##Screen effect"), &config.getRef<float>(vars.fScreenEffectParam), 0.0f, 1.0f);
+				ImGui::ColorPicker(XOR("Color##Screen effect"), &config.getRef<CfgColor>(vars.cScreenEffect));
+				bool changedbut = false;
+				changedbut |= ImGui::Checkbox(XOR("ControlTone enabled"), &config.getRef<bool>(vars.bControlTone));
+				world.setCheckStateButton(changedbut);
+				bool changed1 = false;
+				changed1|= ImGui::SliderFloat(XOR("Tone min"), &config.getRef<float>(vars.fControlToneMin), 0.0f, 1.0f);
+				bool changed2 = false;
+				changed2 |= ImGui::SliderFloat(XOR("Tone max"), &config.getRef<float>(vars.fControlToneMax), 0.0f, 1.0f);
+				world.setCheckStateSlider(changed1 || changed2);
+				ImGui::Checkbox(XOR("Weather"), &config.getRef<bool>(vars.bWeather));
+				world.implMenu();
+				ImGui::Checkbox(XOR("Motion blur"), &config.getRef<bool>(vars.bMotionBlur));
+				ImGui::Checkbox(XOR("Forward##Motion Blur"), &config.getRef<bool>(vars.bMotionBlurForward));
+				ImGui::SliderFloat(XOR("Failling intensity##Motion Blur"), &config.getRef<float>(vars.fMotionBlurFallingIntensity), 0.0f, 5.0f);
+				ImGui::SliderFloat(XOR("Falling max##Motion Blur"), &config.getRef<float>(vars.fMotionBlurFallingMax), 0.0f, 30.0f);
+				ImGui::SliderFloat(XOR("Falling min##Motion Blur"), &config.getRef<float>(vars.fMotionBlurFallingMin), 0.0f, 30.0f);
+				ImGui::SliderFloat(XOR("Strength##Motion Blur"), &config.getRef<float>(vars.fMotionBlurGlobalStrength), 0.0f, 20.0f);
+				ImGui::SliderFloat(XOR("Roll intensity##Motion Blur"), &config.getRef<float>(vars.fMotionBlurRollIntensity), 0.0f, 1.0f);
 			}
 			ImGui::EndGroupPanel();
 

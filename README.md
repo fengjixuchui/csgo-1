@@ -1,8 +1,7 @@
 # Csgo
 Very short and commented source aimed for legit gameplay
 
-![Bartis internal CSGO](https://user-images.githubusercontent.com/69613796/166804234-76aa01ff-36a8-4688-ad6a-b3b517413eb1.png)
-Menu screens: [screens](https://imgur.com/a/FiTtSOT)
+![Bartis internal CSGO](https://user-images.githubusercontent.com/69613796/179428634-adf44410-4002-4e5d-9ac5-b794dcb1c35f.png)
 
 # Information
 Features marked ``(rebuild needed)`` need recode or better version.
@@ -37,7 +36,7 @@ This is a trianing software. No further actions taken by people are heeded.
  * Nade prediction - predicts endpoint of your nade throw. Also can predict incomming nades by same logic.
  * Engine prediction - useful to never skip tick and get correct server time.
  * Chams - uses engine's keyvalues to render it. 5 types and ability to draw backtrack records.
- * Glow - highlight ents (rebuild needed - more ents, not only player).
+ * Glow - highlight player ents.
  * Sound Esp
  * Esp - name, flags, boxes, health, armor, ammo, skeleton.
  * DLight - highlights player by dlight
@@ -51,6 +50,9 @@ This is a trianing software. No further actions taken by people are heeded.
  * Custom smoke/molotov - color/remove/timer
  * Draw dropped weapons - box/icon/name/ammo
  * Bomb overlay with info
+ * Mirrorcam - show what is behind you on extra window (contains fixing setupbones occlusion problems)
+ * Freecam - view any place without moving your model (dormant ents won't render)
+ * Freelook - a copy of how it looks like in PUBG
  </details>
 
 # Keybinds
@@ -109,6 +111,11 @@ This is a trianing software. No further actions taken by people are heeded.
 * 1.4.5 - Changes in code, mainly to render low levels things such as images by resources. Few slight changes into imgui: add ability to load up image by memory, ability to draw multicolors with poly. Discord rpc with updated information from client.
 * 1.4.6 - Texture rendered in the radar, I run on some weird problems there and unfortunately because of the dds file format it's impossible to use Resource class. Cleaned the project settings. Instead of ignoring the error of unsafe function, getting time is threadsafe now. Game color edits are now run per each instead of applying whole list.
 * 1.4.7 - Easy cfg load on start option, setting load cfg won't save current variables but only name to load.
+* 1.4.8 - Added mirrorcam (rendering by ImGui), freecam, freelook, fixed SEH catching allocation for symbols. Console logging is now locked, it's better to run them in mutex.
+* 1.4.9 - Flashlight fixed and added it as a feature. Recoded rendering to take ImVec2 instead of vector2D when using imgui. Fixed/recoded drawing 3d boxes completely. Init localplayer once (and this method probably fixes crashes). Gather prediction move data from stack. Pass std::span as normal copy, not cref.
+* 1.5.0 - World screen effects added: fog, tone control, draw screen effects.
+* 1.5.1 - Add weather effect.
+* 1.5.2 - Added 1:1 motion blur from source leak. Controlling thirdperson should be quite better as now it traces the distance to any objects, just like game originally does. Added extra options to it as suggested in: [#41](https://github.com/Bartis1313/csgo/issues/41). Added comments for sigs, I can't shortly explain how to use RTTI info in 3 lines, so this is just very basic string ref info.
 </details>
 
 # Dependencies

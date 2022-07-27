@@ -1,33 +1,14 @@
 #pragma once
 #include "Recv.hpp"
-#include "math/Vector.hpp"
-#include "../utilities/pad.hpp"
-
-class CViewSetup
-{
-public:
-	int x;
-	int xOld;
-	int y;
-	int yOld;
-	int m_width;
-	int m_widthOld;
-	int m_height;
-	int m_heightOld;
-	PAD(144);
-	float m_fov;
-	float m_viewmodelFov;
-	Vector m_origin;
-	Vector m_angles;
-	PAD(120);
-	int m_edgeBlur;
-};
 
 class ClientClass
 {
+private:
+	using createfn = void* (__cdecl*)(int, int);
+	using createeventfn = void* (__cdecl*)();
 public:
-	void* m_createFn;
-	void* m_createEventFn;
+	createfn m_createFn;
+	createeventfn m_createEventFn;
 	char* m_networkName;
 	RecvTable* m_recvTable;
 	ClientClass* m_next;

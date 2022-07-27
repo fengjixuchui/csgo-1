@@ -221,3 +221,21 @@
 #define FLOW_INCOMING	1
 #define MAX_FLOWS		2		// in & out
 #pragma endregion
+
+#pragma region create_render_flags
+#define CREATERENDERTARGETFLAGS_HDR				0x00000001
+#define CREATERENDERTARGETFLAGS_AUTOMIPMAP		0x00000002
+#define CREATERENDERTARGETFLAGS_UNFILTERABLE_OK 0x00000004
+#pragma endregion
+
+#pragma region edicts
+// How many bits to use to encode an edict.
+#define	MAX_EDICT_BITS				11			// # of bits needed to represent max edicts
+// Max # of edicts in a level
+#define	MAX_EDICTS					(1<<MAX_EDICT_BITS)
+
+// How many bits to use to encode an server class index
+#define MAX_SERVER_CLASS_BITS		9
+// Max # of networkable server classes
+#define MAX_SERVER_CLASSES			(1<<MAX_SERVER_CLASS_BITS)
+#pragma endregion
