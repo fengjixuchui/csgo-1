@@ -1,8 +1,10 @@
 #pragma once
+
 #include "CUserCmd.hpp"
 #include "math/Vector.hpp"
-#include "../utilities/vfunc.hpp"
-#include "../utilities/pad.hpp"
+
+#include <utilities/pad.hpp>
+#include <utilities/vfunc.hpp>
 
 class Player_t;
 

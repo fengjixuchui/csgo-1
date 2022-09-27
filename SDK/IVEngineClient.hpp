@@ -4,8 +4,8 @@
 #include "math/matrix.hpp"
 #include "math/Vector.hpp"
 
-#include "../utilities/pad.hpp"
-#include "../utilities/vfunc.hpp"
+#include <utilities/pad.hpp>
+#include <utilities/vfunc.hpp>
 
 #define FLOW_OUTGOING	0
 #define FLOW_INCOMING	1

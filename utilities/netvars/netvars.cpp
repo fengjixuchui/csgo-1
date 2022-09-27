@@ -1,12 +1,15 @@
 #include "netvars.hpp"
 
-#include "../../SDK/Recv.hpp"
-#include "../../SDK/IBaseClientDll.hpp"
-#include "../../SDK/ClientClass.hpp"
-#include "../../SDK/interfaces/interfaces.hpp"
-#include "../../config/config.hpp"
+#include <SDK/Recv.hpp>
+#include <SDK/IBaseClientDll.hpp>
+#include <SDK/ClientClass.hpp>
+#include <SDK/interfaces/interfaces.hpp>
+#include <config/config.hpp>
+#include <utilities/utilities.hpp>
+#include <utilities/tools/wrappers.hpp>
 
-#include <iomanip>
+#include <array>
+#include <ranges>
 
 void NetvarManager::init()
 {
@@ -19,7 +22,7 @@ void NetvarManager::init()
 	while (clientClass)
 	{
 		auto recvTable = clientClass->m_recvTable;
-		m_Tables.emplace(std::string(recvTable->m_netTableName), recvTable);
+		m_Tables.emplace(std::string{ recvTable->m_netTableName }, recvTable);
 
 		clientClass = clientClass->m_next;
 	}	
@@ -51,7 +54,7 @@ uintptr_t NetvarManager::getProp(RecvTable* recvTable, const char* propName, Rec
 {
 	uintptr_t extraOffset = 0;
 
-	for (int i = 0; i < recvTable->m_propsNum; i++)
+	for (auto i : std::views::iota(0, recvTable->m_propsNum))
 	{
 		auto recvProp = &recvTable->m_props[i];
 		auto recvChild = recvProp->m_dataTable;
@@ -103,6 +106,7 @@ static std::string propToStr(SendPropType type)
 		XOR("string*"), XOR("array"),
 		XOR("datatable (void*)"), XOR("__int64")
 	};
+
 	return arr.at(type);
 }
 
@@ -113,7 +117,7 @@ std::string NetvarManager::getType(RecvProp* recvTable) const
 
 void NetvarManager::dump(RecvTable* recvTable)
 {
-	for (int i = 0; i < recvTable->m_propsNum; i++)
+	for (auto i : std::views::iota(0, recvTable->m_propsNum))
 	{
 		auto recvProp = &recvTable->m_props[i];
 
@@ -122,34 +126,40 @@ void NetvarManager::dump(RecvTable* recvTable)
 
 		std::string recvName = recvProp->m_varName;
 
-		if (recvName.find(XOR("m_")) == std::string::npos) // not starting with m_
+		if (recvName.find(XOR("baseclass")) != std::string::npos)
 			continue;
 
-		// offsets for set are hardcoded- simply no need for this
-		file << std::setfill(' ') << std::setw(30) << recvTable->m_netTableName
-			<< std::setfill('_') << std::setw(80 - recvName.length()) << recvName
-			<< std::setfill(' ') << std::setw(recvName.length() + 2) << " -> "
-			<< "0x" << std::setfill('0') << std::setw(8) << std::hex
-			<< std::uppercase << recvProp->m_offset
-			<< " -> " << getType(recvProp) << "\n";
+		if (::isdigit(recvProp->m_varName[0]))
+			continue;
+
+		file << FORMAT(XOR("[{}::{}] -> 0x{:X} -> ({})"),
+			recvTable->m_netTableName,
+			recvName, recvProp->m_offset,
+			getType(recvProp))
+			<< '\n';
 
 		if (recvProp->m_dataTable)
 			dump(recvProp->m_dataTable);
 	}
 }
 
+#include "../simpleTimer.hpp"
+
 void NetvarManager::dump()
 {
-	file = std::ofstream{ config.getPathForSave(XOR("netvarsDump.txt")), std::ofstream::out | std::ofstream::trunc};
+	file = std::ofstream{ config.getPathForSave(XOR("netvarsDump.txt")), std::ofstream::out | std::ofstream::trunc };
+	file << FORMAT(XOR("Netvars from: {}"), utilities::getTime()) << "\n\n";
 
-	file << XOR("Netvars from: ") << utilities::getTime() << "\n\n";
-
+	TimeCount timer{};
 	auto client = interfaces::client->getAllClasses();
 	do {
 		const auto recvTable = client->m_recvTable;
 		dump(recvTable);
 		client = client->m_next;
 	} while (client);
+	timer.end();
+
+	file << '\n' << FORMAT(XOR("Finished in {:.4f} secs"), timer.getSec());
 
 	file.close();
 }

@@ -3,8 +3,8 @@
 #include <cmath>
 #include <numbers>
 
-#include "../SDK/CGlobalVars.hpp"
-#include "../SDK/interfaces/interfaces.hpp"
+#include <SDK/CGlobalVars.hpp>
+#include <SDK/interfaces/interfaces.hpp>
 
 CfgColor::CfgColor(const Color& color, bool rainbow, float speed)
 	: m_color{ color }, m_rainbow{ rainbow }, m_speed{ speed }

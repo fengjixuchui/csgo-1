@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../utilities/pad.hpp"
-#include "../SDK/math/Vector2D.hpp"
+#include "math/Vector2D.hpp"
+#include <utilities/pad.hpp>
 
 struct MapStruct
 {

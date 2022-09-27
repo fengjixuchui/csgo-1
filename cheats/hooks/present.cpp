@@ -1,37 +1,17 @@
 #include "hooks.hpp"
 
+#include "../classes/renderableToPresent.hpp"
+
+#include <dependencies/ImGui/imgui_impl_dx9.h>
+#include <dependencies/ImGui/imgui_impl_win32.h>
+#include <dependencies/ImGui/imgui.h>
+#include <menu/GUI-ImGui/menu.hpp>
+#include <menu/GUI-ImGui/background.hpp>
+#include <utilities/renderer/renderer.hpp>
+#include <utilities/console/console.hpp>
+#include <utilities/res.hpp>
+
 #include <d3d9.h>
-
-#include "../../dependencies/ImGui/imgui_impl_dx9.h"
-#include "../../dependencies/ImGui/imgui_impl_win32.h"
-#include "../../dependencies/ImGui/imgui.h"
-#include "../menu/GUI-ImGui/menu.hpp"
-#include "../menu/GUI-ImGui/background.hpp"
-
-#include "../features/visuals/radar.hpp"
-#include "../features/misc/misc.hpp"
-#include "../features/visuals/world.hpp"
-#include "../features/visuals/mirrorCam.hpp"
-#include "../features/misc/freeCam.hpp"
-
-#include "../../utilities/renderer/renderer.hpp"
-#include "../../utilities/utilities.hpp"
-#include "../../utilities/console/console.hpp"
-#include "../../utilities/res.hpp"
-#include "../../resource.h"
-
-static bool isValidWindow()
-{
-	// sub window is better, for cs as they recently updated main window name
-#ifdef _DEBUG
-	if (auto window = FindWindowA("Valve001", NULL); GetForegroundWindow() != window)
-		return false;
-#else
-	if (auto window = LF(FindWindowA).cached()(XOR("Valve001"), NULL); LF(GetForegroundWindow).cached()() != window)
-		return false;
-#endif
-	return true;
-}
 
 long __stdcall hooks::present::hooked(IDirect3DDevice9* device, RECT* srcRect, RECT* dstRect, HWND window, RGNDATA* region)
 {
@@ -49,9 +29,6 @@ long __stdcall hooks::present::hooked(IDirect3DDevice9* device, RECT* srcRect, R
 
 		return true;
 	} ();
-
-	if (!isValidWindow())
-		return original(device, srcRect, dstRect, window, region);
 
 	IDirect3DVertexDeclaration9* ppdecl;
 	IDirect3DVertexShader9* ppshader;
@@ -72,12 +49,7 @@ long __stdcall hooks::present::hooked(IDirect3DDevice9* device, RECT* srcRect, R
 		//imRender.drawImage(imdraw, res, 300, 300, 200, 200);
 		imRender.renderPresent(imdraw);
 		background.draw(imdraw);
-		radar.run();
-		misc.drawFpsPlot();
-		misc.drawVelocityPlot();
-		world.drawBombOverlay();
-		mCam.draw();
-		freeCam.drawInfo();
+		RenderablePresentType::runAll();
 	}
 
 	// END DRAW

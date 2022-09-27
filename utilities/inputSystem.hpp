@@ -3,8 +3,6 @@
 #include <array>
 #include <Windows.h>
 
-#define KEYS_SIZE 256
-
 enum class KeyState
 {
     OFF,
@@ -23,6 +21,7 @@ public:
     _NODISCARD bool isKeyPressed(UINT vKey);
     _NODISCARD constexpr int getVKey() const { return m_vKey; }
 private:
+    inline constexpr static size_t KEYS_SIZE = 256;
     std::array<KeyState, KEYS_SIZE> m_keys;
     int m_vKey = 0;
 };

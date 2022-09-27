@@ -3,9 +3,7 @@
 #include <Windows.h>
 #include <array>
 
-#include "../../../utilities/utilities.hpp"
-#include "../../../dependencies/ImGui/imgui_internal.h"
-#include "../utilities/inputSystem.hpp"
+#include <utilities/inputSystem.hpp>
 
 // should pass to hotkey by some callback or array arg
 constexpr std::array badKeys =

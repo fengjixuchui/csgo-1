@@ -1,42 +1,23 @@
 #pragma once
-#pragma warning(disable: 26495)
 
-#include "../../SDK/ISurface.hpp"
-#include "../../SDK/math/Vector.hpp"
-#include "../../SDK/math/Vector2D.hpp"
+#include "BBox.hpp"
+
 #include <string>
 #include <mutex>
 #include <shared_mutex>
 #include <functional>
 #include <any>
 #include <deque>
+#include <array>
 
+#include <dependencies/ImGui/imgui.h>
+
+struct Vector;
+struct Vector2D;
 class Color;
 class Resource;
-
-struct Box
-{
-	float x, y, w, h;
-};
-
-struct Box3D
-{
-#ifdef SURFACE_DRAWING
-	std::array<Vector2D, 8> points;
-
-	Vector2D topleft;
-	Vector2D topright;
-	Vector2D bottomleft;
-	Vector2D bottomright;
-#else
-	std::array<ImVec2, 8> points;
-
-	ImVec2 topleft;
-	ImVec2 topright;
-	ImVec2 bottomleft;
-	ImVec2 bottomright;
-#endif
-};
+class Entity_t;
+struct Vertex_t;
 
 namespace fonts
 {
@@ -51,7 +32,7 @@ class SurfaceRender
 public:
 	void init();
 
-	_NODISCARD unsigned long  __createFont(const char* fontName, const int size, const int weight, const unsigned long flags);
+	[[nodiscard]] unsigned long  __createFont(const char* fontName, const int size, const int weight, const unsigned long flags);
 
 	void drawLine(const int x, const int y, const int x2, const int y2, const Color& color);
 	void drawLine(const Vector2D& start, const Vector2D& end, const Color& color);
@@ -82,19 +63,20 @@ public:
 	// percent should be passed in 0.0-1.0 range, credits for helping Carlos1216
 	void drawProgressRing(const int x, const int y, float radius, const int points, float percent, const float thickness, const Color& color);
 	// width only
-	_NODISCARD int getTextSize(const unsigned long font, const std::string& text);
+	[[nodiscard]] int getTextSize(const unsigned long font, const std::string& text);
 	// width and height
-	_NODISCARD Vector2D getTextSizeXY(const unsigned long font, const std::string& text);
-	_NODISCARD bool worldToScreen(const Vector& in, Vector& out);
-	_NODISCARD bool worldToScreen(const Vector& in, Vector2D& out);
+	[[nodiscard]] Vector2D getTextSizeXY(const unsigned long font, const std::string& text);
+	[[nodiscard]] bool worldToScreen(const Vector& in, Vector& out);
+	[[nodiscard]] bool worldToScreen(const Vector& in, Vector2D& out);
 	void initNewTexture(int& id, Color* RGBA, const int w, const int h);
 	void initNewTexture(int& id, unsigned char* RGBA, const int w, const int h);
-	void drawImage(const Resource& res, const int x, const int y, const int w, const int h, const Color& color = Colors::White);
+	void drawImage(const Resource& res, const int x, const int y, const int w, const int h, const Color& color);
 };
 
 inline SurfaceRender surfaceRender;
 
-#include "../../dependencies/ImGui/imgui_impl_dx9.h"
+struct ImGuiIO;
+struct ImFont;
 
 namespace ImFonts
 {
@@ -106,220 +88,8 @@ namespace ImFonts
 	inline ImFont* icon;
 }
 
-enum class DrawType : size_t
-{
-	NONE = 0,
-	LINE,
-	RECT,
-	RECT_FILLED,
-	RECT_GRADIENT,
-	RECT_MULTICOLOR,
-	CIRCLE,
-	CIRCLE_FILLED,
-	CIRCLE_3D,
-	CIRCLE_3D_FILLED,
-	TRIANGLE,
-	TRIANGLE_FILLED,
-	QUAD,
-	QUAD_FILLED,
-	QUAD_MULTICOLOR,
-	POLYGON,
-	POLYGON_FILLED,
-	POLYGON_MULTICOLOR,
-	TEXT,
-	TEXT_SIZE,
-	ARC,
-};
-
-struct DrawObject_t
-{
-	DrawObject_t(const DrawType type, std::any&& obj)
-		: m_type{ type }, m_drawingObj{ obj }
-	{}
-
-	DrawType m_type = DrawType::NONE;
-	std::any m_drawingObj = {};
-};
-
-struct LineObject_t
-{
-	ImVec2 m_start;
-	ImVec2 m_end;
-	ImU32 m_color;
-	float m_thickness;
-};
-
-struct RectObject_t
-{
-	// normal rect
-	RectObject_t(const ImVec2& min, const ImVec2& max, ImU32 color, float rounding, ImDrawFlags flags, float thickness)
-		: m_min{ min }, m_max{ max }, m_color1{ color }, m_rounding{ rounding }, m_flags{ flags }, m_thickness{ thickness }
-	{}
-	// filled rect
-	RectObject_t(const ImVec2& min, const ImVec2& max, ImU32 color, float rounding, ImDrawFlags flags)
-		: m_min{ min }, m_max{ max }, m_color1{ color }, m_rounding{ rounding }, m_flags{ flags }
-	{}
-	// gradient - 2 colors
-	RectObject_t(const ImVec2& min, const ImVec2& max, ImU32 color1, ImU32 color2, bool horizontal)
-		: m_min{ min }, m_max{ max }, m_color1{ color1 }, m_color2{ color2 }, m_horizontal{ horizontal }
-	{}
-	// gradient - multicolor 4 colors
-	RectObject_t(const ImVec2& min, const ImVec2& max, ImU32 color1, ImU32 color2, ImU32 color3, ImU32 color4)
-		: m_min{ min }, m_max{ max }, m_color1{ color1 }, m_color2{ color2 }, m_color3{ color3 }, m_color4{ color4 }
-	{}
-
-	ImVec2 m_min;
-	ImVec2 m_max;
-	ImU32 m_color1; // left up / normal color
-	ImU32 m_color2; // right up
-	ImU32 m_color3; // right bottom
-	ImU32 m_color4; // left bottom
-	ImDrawFlags m_flags;
-	float m_thickness;
-	float m_rounding = 0.0f;
-	bool m_horizontal;
-};
-
-struct CircleObject_t
-{
-	// normal circle 2D
-	CircleObject_t(const ImVec2& centre, float radius, int segments, ImU32 color, float thickness)
-		: m_centre{ centre }, m_radius{ radius }, m_segments{ segments }, m_color{ color }, m_thickness{ thickness }
-	{}
-	// filled circle 2D
-	CircleObject_t(const ImVec2& centre, float radius, int segments, ImU32 color)
-		: m_centre{ centre }, m_radius{ radius }, m_segments{ segments }, m_color{ color }
-	{}
-	// circle 3D
-	CircleObject_t(const Vector& pos, const std::vector<ImVec2>& pointsVec, float radius, int segments, ImU32 color, ImDrawFlags flags, float thickness)
-		: m_pos{ pos }, m_pointsVec{ pointsVec }, m_radius{ radius }, m_segments{ segments }, m_color{ color }, m_flags{ flags }, m_thickness{ thickness }
-	{}
-	// circle 3D + outline for filled
-	CircleObject_t(const Vector& pos, const std::vector<ImVec2>& pointsVec, float radius, int segments, ImU32 color, ImU32 outline, ImDrawFlags flags, float thickness)
-		: m_pos{ pos }, m_pointsVec{ pointsVec }, m_radius{ radius }, m_segments{ segments }, m_color{ color }, m_outline{ outline }, m_flags{ flags }, m_thickness{ thickness }
-	{}
-
-	ImVec2 m_centre;
-	Vector m_pos; // 3d
-	std::vector<ImVec2> m_pointsVec; // 3d
-	float m_radius;
-	ImU32 m_color;
-	ImU32 m_outline;
-	int m_segments;
-	ImDrawFlags m_flags;
-	float m_thickness;
-};
-
-struct TriangleObject_t
-{
-	// normal triangle
-	TriangleObject_t(const ImVec2& p1, const ImVec2& p2, const ImVec2& p3, ImU32 color, float thickness)
-		: m_p1{ p1 }, m_p2{ p2 }, m_p3{ p3 }, m_color{ color }, m_thickness{ thickness }
-	{}
-	// filled triangle
-	TriangleObject_t(const ImVec2& p1, const ImVec2& p2, const ImVec2& p3, ImU32 color)
-		: m_p1{ p1 }, m_p2{ p2 }, m_p3{ p3 }, m_color{ color }
-	{}
-
-	ImVec2 m_p1;
-	ImVec2 m_p2;
-	ImVec2 m_p3;
-	ImU32 m_color;
-	float m_thickness;
-};
-
-struct QuadObject_t
-{
-	// normal quad
-	QuadObject_t(const ImVec2& p1, const ImVec2& p2, const ImVec2& p3, const ImVec2& p4, ImU32 color, float thickness)
-		: m_p1{ p1 }, m_p2{ p2 }, m_p3{ p3 }, m_p4{ p4 }, m_color{ color }, m_thickness{ thickness }
-	{}
-	// filled quad
-	QuadObject_t(const ImVec2& p1, const ImVec2& p2, const ImVec2& p3, const ImVec2& p4, ImU32 color)
-		: m_p1{ p1 }, m_p2{ p2 }, m_p3{ p3 }, m_p4{ p4 }, m_color{ color }
-	{}
-	// multicolors
-	QuadObject_t(const ImVec2& p1, const ImVec2& p2, const ImVec2& p3, const ImVec2& p4, ImU32 color1, ImU32 color2, ImU32 color3, ImU32 color4)
-		: m_p1{ p1 }, m_p2{ p2 }, m_p3{ p3 }, m_p4{ p4 }, m_color1{ color1 }, m_color2{ color2 }, m_color3{ color3 }, m_color4{ color4 }
-	{}
-
-	ImVec2 m_p1;
-	ImVec2 m_p2;
-	ImVec2 m_p3;
-	ImVec2 m_p4;
-	ImU32 m_color;
-	ImU32 m_color1; // left up / normal color
-	ImU32 m_color2; // right up
-	ImU32 m_color3; // right bottom
-	ImU32 m_color4; // left bottom
-	ImDrawFlags m_flags;
-	float m_thickness;
-};
-
-struct PolygonObject_t
-{
-	// normal polyline/polygon
-	PolygonObject_t(const std::vector<ImVec2>& verts, ImU32 color, ImDrawFlags flags, float thickness)
-		: m_count{ verts.size() }, m_verts{ verts }, m_color{ color }, m_flags{ flags }, m_thickness{ thickness }
-	{}
-	// filled polygon
-	PolygonObject_t(const std::vector<ImVec2>& verts, ImU32 color)
-		: m_count{ verts.size() }, m_verts{ verts }, m_color{ color }
-	{}
-	// filled polygon multicolor
-	PolygonObject_t(const std::vector<ImVec2>& verts, const std::vector<ImU32>& colors)
-		: m_count{ verts.size() }, m_verts{ verts }, m_colors{ colors }
-	{}
-
-	size_t m_count;
-	std::vector<ImVec2> m_verts;
-	std::vector<ImU32> m_colors;
-	ImU32 m_color;
-	ImDrawFlags m_flags;
-	float m_thickness;
-};
-
-struct TextObject_t
-{
-	// normal text
-	TextObject_t(ImFont* font, const ImVec2& pos, ImU32 color, const std::string& text, bool dropShadow, bool centered)
-		: m_font{ font }, m_pos{ pos }, m_color{ color }, m_text{ text }, m_dropShadow{ dropShadow }, m_centred{ centered }
-	{}
-	// text with size
-	TextObject_t(float fontSize, ImFont* font, const ImVec2& pos, ImU32 color, const std::string& text, bool dropShadow, bool centered)
-		: m_size{ fontSize }, m_font{ font }, m_pos{ pos }, m_color{ color }, m_text{ text }, m_dropShadow{ dropShadow }, m_centred{ centered }
-	{}
-
-	ImVec2 m_pos;
-	ImFont* m_font;
-	std::string m_text;
-	ImU32 m_color;
-	bool m_dropShadow;
-	bool m_centred;
-	float m_size = -1.0f;
-};
-
-struct ArcObject_t
-{
-	// classic arc, give 2 angles
-	ArcObject_t(const ImVec2& centre, float radius, float aMin, float aMax, int segments, ImU32 color, ImDrawFlags flags, float thickness)
-		: m_centre{ centre }, m_radius{ radius }, m_aMin{ aMin }, m_aMax{ aMax }, m_segments{ segments }, m_color{ color }, m_flags{ flags }, m_thickness{ thickness }
-	{}
-	// special arc, draws stops path by percentage amount
-	ArcObject_t(const ImVec2& centre, float radius, float aMin, float aMax, int segments, ImU32 color, ImDrawFlags flags, float thickness, float percent)
-		: m_centre{ centre }, m_radius{ radius }, m_aMin{ aMin }, m_aMax{ aMax }, m_segments{ segments }, m_color{ color }, m_flags{ flags }, m_thickness{ thickness }, m_percent{ percent }
-	{}
-
-	ImVec2 m_centre;
-	float m_radius;
-	float m_aMin;
-	float m_aMax;
-	int m_segments;
-	ImU32 m_color;
-	ImDrawFlags m_flags;
-	float m_thickness;
-	float m_percent;
-};
+#include <memory>
+#include "structures.hpp"
 
 // rendering supported by dear ImGui, few changes and new functions comparing to surface draw
 // thread safe idea - full credits to qo0' as I couldn't really rebuild manually w2s with any success removing this weird stutter
@@ -365,7 +135,7 @@ public:
 	// pass pos from world, you will often pass width.x == width.y
 	// width.x -> pass starting width at front
 	// width.y -> pass width of the box, between points at side
-	void drawBox3DFilled(const Vector& pos, const ImVec2& width, const float height, const Color& color, const Color& filling = Colors::Grey, bool outlined = false, const float thickness = 2.0f);
+	void drawBox3DFilled(const Vector& pos, const ImVec2& width, const float height, const Color& color, const Color& filling, bool outlined = false, const float thickness = 2.0f);
 	void drawCone(const Vector& pos, const float radius, const int points, const float size, const Color& colCircle, const Color& colCone, const ImDrawFlags flags = 1, const float thickness = 1.0f);
 
 	/*
@@ -380,12 +150,10 @@ public:
 	void drawArc(const float x, const float y, float radius, const int points, float angleMin, float angleMax, const float thickness, const Color& color, const ImDrawFlags flags = 0);
 	void drawProgressRing(const float x, const float y, const float radius, const int points, const float angleMin, float percent, const float thickness, const Color& color, const ImDrawFlags flags = 0);
 	void drawSphere(const Vector& pos, float radius, float angleSphere, const Color& color);
-	// no need for making it in mutex
-	void drawImage(ImDrawList* draw, const Resource& res, const float x, const float y, const float w, const float h, const Color& color = Colors::White, float rounding = 0.0f, ImDrawFlags flags = ImDrawCornerFlags_All);
-	_NODISCARD ImVec2 getTextSize(ImFont* font, const std::string& text);
-	_NODISCARD bool worldToScreen(const Vector& in, Vector& out);
-	_NODISCARD bool worldToScreen(const Vector& in, Vector2D& out);
-	_NODISCARD bool worldToScreen(const Vector& in, ImVec2& out);
+	[[nodiscard]] ImVec2 getTextSize(ImFont* font, const std::string& text);
+	[[nodiscard]] bool worldToScreen(const Vector& in, Vector& out);
+	[[nodiscard]] bool worldToScreen(const Vector& in, Vector2D& out);
+	[[nodiscard]] bool worldToScreen(const Vector& in, ImVec2& out);
 
 	// add to present
 	void renderPresent(ImDrawList* draw);
@@ -396,8 +164,8 @@ private:
 	void clearData();
 	// add to surface
 	void swapData();
-	std::deque<DrawObject_t> m_drawData;
-	std::deque<DrawObject_t> m_drawDataSafe;
+	std::deque<std::shared_ptr<drawing::Draw>> m_drawData;
+	std::deque<std::shared_ptr<drawing::Draw>> m_drawDataSafe;
 	std::shared_mutex m_mutex;
 };
 

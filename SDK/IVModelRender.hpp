@@ -1,8 +1,10 @@
 #pragma once
+
 #include "math/Vector.hpp"
 #include "math/matrix.hpp"
-#include "../utilities/pad.hpp"
-#include "../utilities/vfunc.hpp"
+
+#include <utilities/pad.hpp>
+#include <utilities/vfunc.hpp>
 
 struct Model_t;
 struct Studiohdr_t;

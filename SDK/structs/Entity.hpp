@@ -1,15 +1,15 @@
 #pragma once
 
-#include "../../utilities/netvars/netvars.hpp"
-#include "../../utilities/vfunc.hpp"
-#include "../interfaces/interfaces.hpp"
 #include "../CUtlVector.hpp"
 #include "../vars.hpp"
-#include "IDXandPaterrns.hpp"
 #include "../Enums.hpp"
-
 #include "../math/Vector.hpp"
 #include "../math/matrix.hpp"
+#include "../math/AABB.hpp"
+#include "indexes.hpp"
+
+#include <utilities/netvars/netvars.hpp>
+#include <utilities/vfunc.hpp>
 
 class Weapon_t;
 class Player_t;
@@ -104,6 +104,7 @@ public:
 	_NODISCARD bool isEmpty() { return m_iClip1() <= 0; }
 	_NODISCARD bool isRifle();
 	_NODISCARD bool isSmg();
+	_NODISCARD bool isMachineGun();
 	_NODISCARD bool isShotgun();
 	_NODISCARD bool isPistol();
 	_NODISCARD bool isSniper();
@@ -182,6 +183,7 @@ public:
 	NETVAR(int, m_hViewModel, "DT_BasePlayer", "m_hViewModel[0]");
 	NETVAR(float, m_flLowerBodyYawTarget, "DT_CSPlayer", "m_flLowerBodyYawTarget");
 	NETVAR(float, m_flFlashDuration, "DT_CSPlayer", "m_flFlashDuration");
+	NETVAR_ADDR(float, m_flFlashBangTime, "DT_CSPlayer", "m_flFlashDuration", -0x10);
 	NETVAR_ADDR(float, m_flNightVisionAlpha, "DT_CSPlayer", "m_flFlashDuration", -0x1C);
 	NETVAR(int, m_lifeState, "DT_CSPlayer", "m_lifeState");
 	NETVAR(int, m_fFlags, "DT_CSPlayer", "m_fFlags");
@@ -213,9 +215,16 @@ public:
 	_NODISCARD int getPing();
 	_NODISCARD std::string getRank(bool useShortName = false);
 	_NODISCARD int getWins();
-	_NODISCARD bool isPossibleToSee(const Vector& pos);
+	_NODISCARD bool isPossibleToSee(Player_t* player, const Vector& pos);
+	_NODISCARD bool isViewInSmoke(const Vector& pos);
+	_NODISCARD bool isOtherTeam(Player_t* player);
 	// address as number
 	_NODISCARD uintptr_t getLiteralAddress();
+
+	// https://github.com/perilouswithadollarsign/cstrike15_src/blob/f82112a2388b841d72cb62ca48ab1846dfcc11c8/game/shared/collisionproperty.cpp#L845
+	_NODISCARD AABB_t getOcclusionBounds();
+	// https://github.com/perilouswithadollarsign/cstrike15_src/blob/f82112a2388b841d72cb62ca48ab1846dfcc11c8/game/server/gameinterface.cpp#L2772
+	_NODISCARD AABB_t getCameraBounds();
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -240,6 +249,14 @@ public:
 	NETVAR(bool, m_bUseCustomAutoExposureMax, "DT_EnvTonemapController", "m_bUseCustomAutoExposureMax");
 	NETVAR(float, m_flCustomAutoExposureMin, "DT_EnvTonemapController", "m_flCustomAutoExposureMin");
 	NETVAR(float, m_flCustomAutoExposureMax, "DT_EnvTonemapController", "m_flCustomAutoExposureMax");
+	NETVAR(bool, m_bUseCustomBloomScale, "DT_EnvTonemapController", "m_bUseCustomBloomScale");
+	NETVAR(float, m_flCustomBloomScale, "DT_EnvTonemapController", "m_flCustomBloomScale");
+};
+
+class EnvAmbientLight_t : public Entity_t
+{
+public:
+	NETVAR(Vector, m_vecColor, "DT_EnvAmbientLight", "m_vecColor");
 };
 
 #undef RENDERABLE

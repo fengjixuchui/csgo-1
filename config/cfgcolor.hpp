@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../SDK/Color.hpp" // let it include in header
+#include <SDK/Color.hpp>
 
 class CfgColor
 {

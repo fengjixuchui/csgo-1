@@ -1,25 +1,18 @@
 #include "hooks.hpp"
 
-#include "../../SDK/CUserCmd.hpp"
-#include "../../SDK/Input.hpp"
-#include "../../SDK/IClientEntityList.hpp"
-#include "../../SDK/IVEngineClient.hpp"
-#include "../../SDK/ClientClass.hpp"
-#include "../../SDK/interfaces/interfaces.hpp"
-
-#include "../features/aimbot/aimbot.hpp"
+#include "../classes/createMove.hpp"
 #include "../features/prediction/prediction.hpp"
-#include "../features/backtrack/backtrack.hpp"
-#include "../features/misc/movement.hpp"
-#include "../features/aimbot/triggerbot.hpp"
-#include "../features/visuals/world.hpp"
-#include "../features/misc/misc.hpp"
-#include "../features/prediction/nadepred.hpp"
-#include "../features/misc/freeLook.hpp"
-#include "../features/misc/freeCam.hpp"
+#include "../features/misc/movement/movement.hpp"
+#include "../features/misc/cameras/freeCam.hpp"
 
-#include "../game.hpp"
-#include "../globals.hpp"
+#include <SDK/CUserCmd.hpp>
+#include <SDK/Input.hpp>
+#include <SDK/IClientEntityList.hpp>
+#include <SDK/IVEngineClient.hpp>
+#include <SDK/ClientClass.hpp>
+#include <SDK/interfaces/interfaces.hpp>
+#include <game/game.hpp>
+#include <game/globals.hpp>
 
 #pragma warning(disable: 4409)
 
@@ -55,30 +48,24 @@ void __stdcall createMoveProxy(int sequence, float inputTime, bool active, bool&
 	Vector oldAngle = cmd->m_viewangles;
 
 	// otherwise we moving
-	if (freeCam.isInCam())
+	if (g_Freecam.isInCam())
 	{
 		cmd->m_forwardmove = 0;
 		cmd->m_sidemove = 0;
 	}
 
 	game::serverTime(cmd);
-	movement.bunnyhop(cmd);
-	movement.strafe(cmd);
-	nadePred.createMove(cmd->m_buttons);
-	backtrack.updateSequences();
-	freeLook.createMove(cmd);
+	CreateMovePrePredictionType::runAll(cmd);
 
-	prediction.update();
-	prediction.addToPrediction(cmd, [=]()
+	g_Prediction.update();
+	g_Prediction.addToPrediction(cmd, [=]()
 		{
-			backtrack.run(cmd);
-			aimbot.run(cmd);
-			aimbot.runRCS(cmd);
-			triggerbot.run(cmd);
-			misc.getVelocityData();
+			CreateMoveInPredictionType::runAll(cmd);
 		});
 
-	movement.fix(cmd, oldAngle);
+	CreateMovePostPredictionType::runAll(cmd);
+
+	g_MovementFix.run(cmd, oldAngle);
 
 	// don't get untrusted
 	cmd->m_viewangles.normalize();

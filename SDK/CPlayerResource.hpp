@@ -2,7 +2,7 @@
 
 #include <utility>
 
-#include "../utilities/netvars/netvars.hpp"
+#include <utilities/netvars/netvars.hpp>
 
 class PlayerResource
 {

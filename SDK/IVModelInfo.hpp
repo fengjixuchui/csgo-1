@@ -1,7 +1,9 @@
 #pragma once
+
 #include "math/Vector.hpp"
-#include "../utilities/pad.hpp"
-#include "../utilities/vfunc.hpp"
+
+#include <utilities/pad.hpp>
+#include <utilities/vfunc.hpp>
 
 struct Mstudiobone_t
 {

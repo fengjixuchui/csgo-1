@@ -4,7 +4,7 @@
 #include "CUtlString.hpp"
 #include "Color.hpp"
 
-#include "../utilities/pad.hpp"
+#include <utilities/pad.hpp>
 
 #define PARTICLE_ATTRIBUTE_TINT_RGB 6
 #define PARTICLE_ATTRIBUTE_ALPHA	7

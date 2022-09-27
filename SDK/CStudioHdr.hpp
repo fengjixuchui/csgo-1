@@ -3,7 +3,7 @@
 #include "CUtlVector.hpp"
 #include "IVModelInfo.hpp"
 
-#include "../utilities/pad.hpp"
+#include <utilities/pad.hpp>
 
 struct Virtualmodel_t;
 

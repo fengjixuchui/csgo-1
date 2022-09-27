@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Color.hpp"
-#include "../utilities/pad.hpp"
+#include <utilities/pad.hpp>
 
 class CGlowObject_t
 {

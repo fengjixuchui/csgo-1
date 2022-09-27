@@ -1,8 +1,10 @@
 #pragma once
-#include "../utilities/pad.hpp"
-#include "../utilities/vfunc.hpp"
+
 #include "Color.hpp"
 #include "math/Vector.hpp"
+
+#include <utilities/pad.hpp>
+#include <utilities/vfunc.hpp>
 
 enum OverrideType_t
 {

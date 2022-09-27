@@ -1,5 +1,6 @@
 #pragma once
-#include "../utilities/vfunc.hpp"
+
+#include <utilities/vfunc.hpp>
 
 class ClientClass;
 

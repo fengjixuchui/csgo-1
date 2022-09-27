@@ -1,19 +1,23 @@
 #include "Entity.hpp"
 
-#include <array>
-
 #include "../IVModelInfo.hpp"
 #include "../ClientClass.hpp"
 #include "../Enums.hpp"
 #include "../ICollideable.hpp"
 #include "../IClientEntityList.hpp"
-#include "../math/matrix.hpp"
-#include "../math/Vector.hpp"
-#include "../../utilities/math/math.hpp"
 #include "../IVEngineClient.hpp"
 #include "../CPlayerResource.hpp"
 #include "../IEngineTrace.hpp"
 #include "../IWeapon.hpp"
+#include "../math/matrix.hpp"
+#include "../math/Vector.hpp"
+#include "../interfaces/interfaces.hpp"
+
+#include <gamememory/memory.hpp>
+#include <utilities/tools/tools.hpp>
+#include <utilities/math/math.hpp>
+
+#include <array>
 
 ////////////////////////////////////////////////////////////////////////
 
@@ -26,7 +30,7 @@ Vector Entity_t::getAimPunch()
 
 AnimationLayer* Entity_t::getAnimOverlays()
 {
-	const static auto offset = *reinterpret_cast<uintptr_t*>(utilities::patternScan(CLIENT_DLL, ANIMATION_LAYER, 0x2)); // 0x2990
+	auto offset = g_Memory.m_animOverlays();
 	return *reinterpret_cast<AnimationLayer**>(uintptr_t(this) + offset);
 }
 
@@ -36,9 +40,7 @@ size_t Entity_t::getSequenceActivity(size_t sequence)
 	if (!studio)
 		return 0;
 
-	using fn = int(__fastcall*)(void*, void*, int);
-	const static auto originalGSA = reinterpret_cast<fn>(utilities::patternScan(CLIENT_DLL, SEQUENCE_ACTIVITY));
-	return originalGSA(this, studio, sequence);
+	return g_Memory.m_sequenceActivity()(this, studio, sequence);
 }
 
 bool Entity_t::isBreakable()
@@ -49,10 +51,7 @@ bool Entity_t::isBreakable()
 	if (!this->getIndex())
 		return false;
 
-	using fn = bool(__thiscall*)(void*);
-	const static auto isBreakablefn = reinterpret_cast<fn>(utilities::patternScan(CLIENT_DLL, IS_BREAKBLE));
-
-	if (bool res = isBreakablefn(this); !res)
+	if (bool res = g_Memory.m_isBreakable()(this); !res)
 		return false;
 
 	auto cl = this->clientClass();
@@ -71,7 +70,7 @@ bool Entity_t::isBreakable()
 		return true;
 
 	// there we finally check actual entity
-	if (id = CBaseEntity && this->collideable()->getSolid() == 1) // can mess with masks, but it's the same
+	if (id == CBaseEntity && this->collideable()->getSolid() == 1) // can mess with masks, but it's the same
 		return true;
 
 	return false;
@@ -94,7 +93,7 @@ bool Entity_t::setupBonesShort(Matrix3x4* _out, int maxBones, int mask, float ti
 
 CUtlVector<Matrix3x4> Entity_t::m_CachedBoneData()
 {
-	const static auto offset = *reinterpret_cast<uintptr_t*>(utilities::patternScan(CLIENT_DLL, CACHED_BONE, 0x2)) + 0x4; // 0x2914
+	auto offset = g_Memory.m_cachedBones();
 	return *reinterpret_cast<CUtlVector<Matrix3x4>*>(uintptr_t(this) + offset);
 }
 
@@ -295,6 +294,14 @@ bool Weapon_t::isSmg()
 	if (!this->getWpnInfo())
 		return false;
 
+	return this->getWpnInfo()->m_type == WEAPONTYPE_SUBMACHINEGUN;
+}
+
+bool Weapon_t::isMachineGun()
+{
+	if (!this->getWpnInfo())
+		return false;
+
 	return this->getWpnInfo()->m_type == WEAPONTYPE_MACHINEGUN;
 }
 
@@ -374,9 +381,7 @@ size_t Weapon_t::getNadeRadius()
 
 void Player_t::setAbsOrigin(const Vector& origin)
 {
-	using fn = void(__thiscall*)(void*, const Vector&);
-	const static auto setabs = reinterpret_cast<fn>(utilities::patternScan(CLIENT_DLL, SETABSORIGIN));
-	setabs(this, std::cref(origin));
+	g_Memory.m_setAbsOrigin()(this, std::cref(origin));
 }
 
 Weapon_t* Player_t::getActiveWeapon()
@@ -458,9 +463,7 @@ Vector Player_t::getHitgroupPos(const int hitgroup)
 
 bool Player_t::isC4Owner()
 {
-	using fn = bool(__thiscall*)(void*);
-	const static auto isc4 = reinterpret_cast<fn>(utilities::patternScan(CLIENT_DLL, HASC4));
-	return isc4(this);
+	return g_Memory.m_isC4Owner()(this);
 }
 
 std::string Player_t::getName()
@@ -528,19 +531,86 @@ int Player_t::getWins()
 	return -1;
 }
 
-bool Player_t::isPossibleToSee(const Vector& pos)
+bool Player_t::isPossibleToSee(Player_t* player, const Vector& pos)
 {
 	Trace_t tr;
 	TraceFilter filter;
 	filter.m_skip = this;
 	interfaces::trace->traceRay({ this->getEyePos(), pos }, MASK_PLAYER, &filter, &tr);
 
-	return tr.m_entity == this || tr.m_fraction > 0.97f;
+	return tr.m_entity == player || tr.m_fraction > 0.97f;
+}
+
+bool Player_t::isViewInSmoke(const Vector& pos)
+{
+	return g_Memory.m_throughSmoke()(this->getEyePos(), pos);
 }
 
 uintptr_t Player_t::getLiteralAddress()
 {
 	return *reinterpret_cast<uintptr_t*>(this);
+}
+
+AABB_t Player_t::getOcclusionBounds()
+{
+	auto col = this->collideable();
+	const auto& mins = col->OBBMins();
+	const auto& maxs = col->OBBMaxs();
+
+	auto m_usSolidFlags = col->getSolidFlags();
+	auto m_nSolidType = col->getSolid();
+
+	auto isBoundsDefinedInEntitySpace = [=]()
+	{
+		return ((m_usSolidFlags & 0x40) == 0) &&
+			(m_nSolidType != 2) && (m_nSolidType != 0);
+	};
+
+	if (!isBoundsDefinedInEntitySpace() || col->getCollisionAngles().isZero())
+	{
+		const auto& pos = this->absOrigin();
+		return { pos + mins, pos + maxs };
+	}
+	else
+	{
+		Matrix3x4 mat = col->collisionToWorldTransform();
+		auto [boundsMin, boundsMax] = math::transformAABB(mat, mins, maxs);
+		return { boundsMin, boundsMax };
+	}
+}
+
+#include "../ICvar.hpp"
+#include "../ConVar.hpp"
+
+AABB_t Player_t::getCameraBounds()
+{
+	const static auto occlusion_test_camera_margins = interfaces::cvar->findVar(XOR("occlusion_test_camera_margins"));
+	const static auto occlusion_test_jump_margin = interfaces::cvar->findVar(XOR("occlusion_test_jump_margin"));
+
+	const auto& pos = this->m_vecOrigin();
+	float cameraMargins = occlusion_test_camera_margins->getFloat();
+	float jumpMargin = occlusion_test_jump_margin->getFloat();
+
+	return {
+		pos + Vector{ 0.0f, 0.0f, 46.0f } - Vector{ cameraMargins, cameraMargins, 0.0f },
+		pos + Vector{ 0.0f, 0.0f, 64.0f } + Vector{ cameraMargins, cameraMargins, jumpMargin }
+	};
+}
+
+bool Player_t::isOtherTeam(Player_t* player)
+{
+	const static auto mp_teammates_are_enemies = interfaces::cvar->findVar(XOR("mp_teammates_are_enemies"));
+	bool isDM = false;
+	if (mp_teammates_are_enemies && mp_teammates_are_enemies->getInt())
+		isDM = true;
+
+	if (isDM && this->m_iTeamNum() == player->m_iTeamNum())
+		return true;
+
+	if (this->m_iTeamNum() != player->m_iTeamNum())
+		return true;
+
+	return false;
 }
 
 ////////////////////////////////////////////////////////////////

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../utilities/netvars/netvars.hpp"
+#include <utilities/netvars/netvars.hpp>
 
 class CGameRules
 {

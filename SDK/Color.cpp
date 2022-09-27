@@ -1,5 +1,6 @@
 #include "Color.hpp"
-#include "../dependencies/ImGui/imgui.h" // for struct
+
+#include <dependencies/ImGui/imgui_impl_dx9.h>
 
 ImVec4 Color::getImguiColor(const Color& color)
 {
@@ -87,7 +88,7 @@ Color Color::hslToRGB(float hue, float saturation, float lightness)
 	return Color{ r, g, b };
 }
 
-ImU32 U32(const Color& color)
+ImU32 Color::U32(const Color& color)
 {
 	return ImGui::GetColorU32(Color::getImguiColor(color));
 }
@@ -101,4 +102,11 @@ Color Color::rainbowColor(const float gameTime, const float multiply)
 		std::cos(gameTime * multiply) * 0.5f + 0.5f,
 		std::cos(gameTime * multiply - 2.0f * std::numbers::pi_v<float> / 3.0f) * 0.5f + 0.5f,
 		std::cos(gameTime * multiply - 4.0f * std::numbers::pi_v<float> / 3.0f) * 0.5f + 0.5f);
+}
+
+Color Color::healthBased(uint8_t health, uint8_t alpha)
+{
+	int g = static_cast<int>(health * 2.55f);
+	int r = 255 - g;
+	return Color(r, g, 0, alpha);
 }

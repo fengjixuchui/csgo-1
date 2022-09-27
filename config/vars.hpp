@@ -5,6 +5,10 @@
 #include "config.hpp"
 #include "enums.hpp"
 
+#include <utilities/utilities.hpp>
+#include <utilities/tools/tools.hpp>
+#include <utilities/tools/wrappers.hpp>
+
 // type - template
 // name - name of var
 // defaVal - default value for the var
@@ -19,26 +23,17 @@
 #define CONFIG_ADD_VEC(type, name, amount, defVal, nameSave) \
 	const size_t name = config.addVar<std::vector<type>>(utilities::getFilledVec<type, amount>(defVal), XOR(nameSave));
 
-#pragma region vars
 struct Variables
 {
 
 	// AIMBOT & TRIGGERBOT
 
-	CONFIG_ADD_VARIABLE(bool, bAimbot, false, "aimbot enabled");
-	CONFIG_ADD_VARIABLE(int, iAimbot, 0, "aimbot mode");
-	CONFIG_ADD_VARIABLE(float, fFovAimbot, 0.0f, "aimbot FOV");
-	CONFIG_ADD_VARIABLE(float, fSmooth, 1.0f, "smooth amount for aimbot");
-	CONFIG_ADD_VARIABLE(bool, bRCS, false, "recoil control system enabled");
-	CONFIG_ADD_VARIABLE(float, fRCSx, 50.0f, "recoil control system percentage for axis");
-	CONFIG_ADD_VARIABLE(float, fRCSy, 50.0f, "recoil control system percentage for yaw");
-	CONFIG_ADD_VARIABLE(bool, bTriggerbot, false, "triggerbot enabled");
-	CONFIG_ADD_VARIABLE(float, fTriggerDelay, 0.0f, "triggerbot amount of delay in ms");
+	CONFIG_ADD_VEC(CfgWeapon, arrAimbot, E2T(WeaponList::LIST_SIZE) - 1, CfgWeapon(), "Aimbot settings");
+
+	
 	CONFIG_ADD_VARIABLE(bool, bDrawFov, false, "draw fov representing aimbot range");
 	CONFIG_ADD_VARIABLE(CfgColor, cDrawFov, Colors::LightBlue, "draw fov representing aimbot range color");
 	CONFIG_ADD_VARIABLE(bool, bDrawBestPoint, false, "draw best point of hitbox");
-	CONFIG_ADD_VARIABLE(bool, bAimbotDelay, false, "enable aimbot delay");
-	CONFIG_ADD_VARIABLE(float, fAimbotDelay, false, "aimbot delay time");
 	CONFIG_ADD_VARIABLE(bool, bAimbotUseKey, false, "Use aimbot on key");
 	CONFIG_ADD_VARIABLE(Key, kAimbotKey, Key(KeyMode::DOWN, VK_LBUTTON), "aimbot key");
 
@@ -82,6 +77,7 @@ struct Variables
 	CONFIG_ADD_VARIABLE(bool, bDrawName, false, "draw name enabled");
 	CONFIG_ADD_VARIABLE(bool, bDrawSkeleton, false, "draw skeleton enabled");
 	CONFIG_ADD_VARIABLE(CfgColor, cSkeleton, Colors::White, "skeleton color");
+	CONFIG_ADD_VARIABLE(bool, bSkeletonDebugPoints, false, "skeleton debug points enabled");
 	CONFIG_ADD_VARIABLE(bool, bDLight, false, "DLight enabled");
 	CONFIG_ADD_VARIABLE(CfgColor, cDlight, Color(20, 70, 150, 255), "Dlight color");
 	CONFIG_ADD_VARIABLE(float, fDlightRadius, 50.0f, "DLight radius");
@@ -103,7 +99,9 @@ struct Variables
 	CONFIG_ADD_VARIABLE(Color, cStepLine, Colors::White, "step line info color");
 	CONFIG_ADD_VARIABLE(bool, bLogEnabled, false, "enable log printing");
 	CONFIG_ADD_VARIABLE(float, fLogMaxTime, 4.0f, "time for how long the log should be visible");
-
+	CONFIG_ADD_VARIABLE(float, fVisDormacyTime, 1.0f, "dormacy fade time");
+	CONFIG_ADD_VARIABLE(float, fVisDormacyTimeLimit, 15.0f, "dormacy fade time limit (for boxes)");
+	
 
 	// WORLD
 
@@ -141,9 +139,19 @@ struct Variables
 	CONFIG_ADD_VARIABLE(CfgColor, cEditMolotov, Colors::Purple, "color molotov edited");
 	CONFIG_ADD_VARIABLE(CfgColor, cEditBlood, Colors::Purple, "color blood edited");
 	CONFIG_ADD_VARIABLE(CfgColor, cEditSmoke, Colors::Purple, "color smoke edited");
-	CONFIG_ADD_VARIABLE(bool, bDrawBulletTracer, false, "bullet tracer enabled");
-	CONFIG_ADD_VARIABLE(float, fDrawBulletTracer, 2.0f, "bullet tracer time");
-	CONFIG_ADD_VARIABLE(CfgColor, cDrawBulletTracer, Colors::LightBlue, "bullet tracer color");
+	CONFIG_ADD_VARIABLE(bool, bBulletTracer, false, "bullet tracer enabled");
+	CONFIG_ADD_VARIABLE(int, iBulletTracer, 0, "bullet tracer name idx");
+	/*CONFIG_ADD_VARIABLE(std::string, sBulletTracerType, "0", "bullet tracer type");*/
+	CONFIG_ADD_VARIABLE(std::string, sBulletTracer, "4|8", "bullet tracer flags");
+	CONFIG_ADD_VARIABLE(float, fBulletTracerLife, 2.0f, "bullet tracer time");
+	CONFIG_ADD_VARIABLE(CfgColor, cBulletTracer, Colors::LightBlue, "bullet tracer color");
+	CONFIG_ADD_VARIABLE(float, fBulletTracerWidth, 2.0f, "bullet tracer width");
+	CONFIG_ADD_VARIABLE(float, fBulletTracerFadeLength, 1.0f, "bullet tracer fade length");
+	CONFIG_ADD_VARIABLE(float, fBulletTracerAmplitude, 2.0f, "bullet tracer amplitude");
+	CONFIG_ADD_VARIABLE(float, fBulletTracerSpeed, 1.0f, "bullet tracer speed");
+	CONFIG_ADD_VARIABLE(float, fBulletTracerStartFrame, 0.0f, "bullet tracer start frame");
+	CONFIG_ADD_VARIABLE(float, fBulletTracerFrameRate, 60.0f, "bullet tracer framerate");
+	CONFIG_ADD_VARIABLE(int, fBulletTracerSegments, 2, "bullet tracer segments");
 	CONFIG_ADD_VARIABLE(bool, bDrawClientSideImpacts, false, "draw impacts from client side");
 	CONFIG_ADD_VARIABLE(float, fDrawClientSideImpacts, 3.0f, "draw impacts from client side time");
 	CONFIG_ADD_VARIABLE(CfgColor, cDrawClientSideImpactsLine, Colors::Cyan, "draw impacts from client side color lines");
@@ -161,6 +169,7 @@ struct Variables
 	CONFIG_ADD_VARIABLE(bool, bControlTone, false, "control tone enabled");
 	CONFIG_ADD_VARIABLE(float, fControlToneMin, 0.5f, "control tone min");
 	CONFIG_ADD_VARIABLE(float, fControlToneMax, 0.5f, "control tone max");
+	CONFIG_ADD_VARIABLE(float, fControlToneBloomScale, 0.0f, "control bloom scale");
 	CONFIG_ADD_VARIABLE(bool, bWeather, false, "custom weather enabled");
 	CONFIG_ADD_VARIABLE(float, fWeatherRainLenght, 0.0f, "weather rain lenght");
 	CONFIG_ADD_VARIABLE(float, fWeatherRainSpeed, 0.0f, "weather rain speed");
@@ -169,6 +178,8 @@ struct Variables
 	CONFIG_ADD_VARIABLE(float, fWeatherRainSideVel, 0.0f, "weather rain side vel");
 	CONFIG_ADD_VARIABLE(float, fWeatherRainAlpha, 0.0f, "weather rain alpha");
 	CONFIG_ADD_VARIABLE(float, fWeatherWindSpeed, 0.0f, "weather rain wind speed");
+	CONFIG_ADD_VARIABLE(bool, bAmbientLight, false, "ambient light enabled");
+	CONFIG_ADD_VARIABLE(Color, cAmbientLight, Colors::LightBlue, "ambient light color");
 
 	// MASTER SWITCHES
 
@@ -189,6 +200,8 @@ struct Variables
 	CONFIG_ADD_VARIABLE(int, iCrosshair, 0, "crosshair mode");
 	CONFIG_ADD_VARIABLE(bool, bBacktrack, false, "backtrack enabled");
 	CONFIG_ADD_VARIABLE(float, fBacktrackTick, 200.0f, "backtrack amount of ticks to manipulate");
+	CONFIG_ADD_VARIABLE(bool, bBacktrackSmoke, true, "backtrack smoke check");
+	CONFIG_ADD_VARIABLE(float, fBacktrackFlashStart, 120.0f, "backtrack flash alpha");
 	CONFIG_ADD_VARIABLE(bool, bFakeLatency, false, "fake latency enabled");
 	CONFIG_ADD_VARIABLE(float, fFakeLatency, 200.0f, "fake latency amount");
 	CONFIG_ADD_VARIABLE(bool, bBunnyHop, false, "bunnyhop enabled");
@@ -282,5 +295,10 @@ struct Variables
 	CONFIG_ADD_VARIABLE(CfgColor, cBackGround2, Color(65, 75, 105, 255), "background color2");
 	CONFIG_ADD_VARIABLE(CfgColor, cBackGround3, Color(220, 240, 240, 255), "background color3");
 
+	// had to place them there, there is some really weird error with variant and adding vars
+
+	CONFIG_ADD_VARIABLE(bool, bVisSmokeCheck, false, "visuals smoke check");
+	CONFIG_ADD_VARIABLE(bool, bVisVisibleCheck, false, "visuals visible check");
+	CONFIG_ADD_VARIABLE(float, fVisFlashAlphaLimit, 120.0f, "visuals flash alpha limit");
+
 } inline vars;
-#pragma endregion

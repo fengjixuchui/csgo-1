@@ -8,14 +8,14 @@
 
 #include "key.hpp"
 #include "cfgcolor.hpp"
-#include "../utilities/utilities.hpp"
+#include "cfgWeapon.hpp"
 
 class ConfigType
 {
 public:
 	// add possible types to accept
 	using Types = std::variant<bool, int, float,
-		std::string, CfgColor,
+		std::string, CfgColor, std::vector<CfgWeapon>,
 		std::vector<bool>, Key>;
 
 	ConfigType() = default;
@@ -28,13 +28,13 @@ public:
 
 	// get the value, template is needed to operate easier, by REFERENCE
 	template<typename T>
-	_NODISCARD T& getRef() const
+	[[nodiscard]] T& getRef() const
 	{
 		return std::add_lvalue_reference_t<T>(std::get<T>(m_type));
 	}
 	// get the value, template is needed to operate easier, by VALUE
 	template<typename T>
-	_NODISCARD T get() const
+	[[nodiscard]] T get() const
 	{
 		return std::get<T>(m_type);
 	}
@@ -46,8 +46,8 @@ public:
 		m_type = var;
 	}
 	// use only to return variant
-	_NODISCARD Types getType() const { return m_type; }
-	_NODISCARD std::string getName() const { return m_name; }
+	[[nodiscard]] Types getType() const { return m_type; }
+	[[nodiscard]] std::string getName() const { return m_name; }
 private:
 	Types m_type;
 	std::string m_name;
@@ -74,42 +74,42 @@ public:
 	void reload();
 	// adds variable into the vector of variables, returns size due to getting "ID" from every varaible
 	template <typename T>
-	_NODISCARD size_t addVar(const T& var, const std::string& name)
+	[[nodiscard]] size_t addVar(const T& var, const std::string& name)
 	{
 		m_allVars.emplace_back(ConfigType{ var, name });
 		return m_allVars.size() - 1;
 	}
 	// get selected by REFERENCE variable
 	template <typename T>
-	_NODISCARD T& getRef(const size_t idx) const
+	[[nodiscard]] T& getRef(const size_t idx) const
 	{
 		return m_allVars.at(idx).getRef<T>();
 	}
 	// use to just check type value
 	template <typename T>
-	_NODISCARD T get(const size_t idx) const
+	[[nodiscard]] T get(const size_t idx) const
 	{
 		return m_allVars.at(idx).get<T>();
 	}
 	// get load cfg name
-	_NODISCARD std::string getCfgToLoad() const;
+	[[nodiscard]] std::string getCfgToLoad() const;
 	// get main folder
-	_NODISCARD std::filesystem::path getHackPath() const;
+	[[nodiscard]] std::filesystem::path getHackPath() const;
 	// get main load folder
-	_NODISCARD std::filesystem::path getLoadPath() const;
+	[[nodiscard]] std::filesystem::path getLoadPath() const;
 	// get DEFAULT name, returns the field m_defaultConfig which never change
-	_NODISCARD std::string getDefaultConfigName() const { return m_defaultConfig; }
+	[[nodiscard]] std::string getDefaultConfigName() const { return m_defaultConfig; }
 	// get correct path for savings
-	_NODISCARD std::filesystem::path getPathForSave(const std::string& file) const;
+	[[nodiscard]] std::filesystem::path getPathForSave(const std::string& file) const;
 	// get correct path for load names
-	_NODISCARD std::filesystem::path getPathForLoad(const std::string& file) const;
+	[[nodiscard]] std::filesystem::path getPathForLoad(const std::string& file) const;
 	// get all files
-	_NODISCARD std::vector<std::string> getAllConfigFiles() const { return m_allFilesInFolder; }
+	[[nodiscard]] std::vector<std::string> getAllConfigFiles() const { return m_allFilesInFolder; }
 	// get documents path, static
-	_NODISCARD static std::filesystem::path getDocumentsPath();
+	[[nodiscard]] static std::filesystem::path getDocumentsPath();
 private:
 	// don't duplicate names
-	_NODISCARD size_t getIndexByName(const std::string& name);
+	[[nodiscard]] size_t getIndexByName(const std::string& name);
 
 	std::filesystem::path getPathForConfig(const std::string& file);
 

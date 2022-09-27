@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../utilities/vfunc.hpp"
+#include <utilities/vfunc.hpp>
 
 class ITexture;
 class IMaterial;

@@ -1,10 +1,10 @@
 #pragma once
 
+#include <utilities/tools/tools.hpp>
+
 #include <fstream>
 #include <unordered_map>
 #include <type_traits>
-
-#include "../../utilities/utilities.hpp"
 
 // generate netvar address
 // type - template type for return type
@@ -12,7 +12,7 @@
 // table - table name to search the netvar prop
 // prop - prop name
 #define NETVAR(type, name, table, prop) \
-_NODISCARD std::add_lvalue_reference_t<type> name() { \
+[[nodiscard]] std::add_lvalue_reference_t<type> name() { \
 	static uintptr_t offset = netvarMan.getNetvar(XOR(table), XOR(prop)); \
 	return *reinterpret_cast<std::add_pointer_t<type>>((uintptr_t)this + offset ); \
     }
@@ -23,7 +23,7 @@ _NODISCARD std::add_lvalue_reference_t<type> name() { \
 // table - table name to search the netvar prop
 // prop - prop name
 #define PTRNETVAR(type, name, table, prop) \
-_NODISCARD std::add_pointer_t<type> name() { \
+[[nodiscard]] std::add_pointer_t<type> name() { \
 	static uintptr_t offset = netvarMan.getNetvar(XOR(table), XOR(prop)); \
 	return reinterpret_cast<std::add_pointer_t<type>>((uintptr_t)this + offset); \
     }
@@ -33,7 +33,7 @@ _NODISCARD std::add_pointer_t<type> name() { \
 // name - name your function
 // offset - offset to add
 #define OFFSET(type, name, offset) \
-_NODISCARD std::add_lvalue_reference_t<type> name() { \
+[[nodiscard]] std::add_lvalue_reference_t<type> name() { \
 	return *reinterpret_cast<std::add_pointer_t<type>>((uintptr_t)this + offset); \
 	}
 
@@ -44,7 +44,7 @@ _NODISCARD std::add_lvalue_reference_t<type> name() { \
 // prop - prop name
 // addr - extra offset to add
 #define NETVAR_ADDR(type, name, table, prop, addr) \
-_NODISCARD std::add_lvalue_reference_t<type> name() { \
+[[nodiscard]] std::add_lvalue_reference_t<type> name() { \
 	static uintptr_t offset = netvarMan.getNetvar(XOR(table), XOR(prop)); \
 	return *reinterpret_cast<std::add_pointer_t<type>>((uintptr_t)this + offset + addr); \
 	}
@@ -56,14 +56,14 @@ class NetvarManager
 {
 public:
 	void init();
-	uintptr_t getNetvar(const char* tableName, const char* propName) const;
+	[[nodiscard]] uintptr_t getNetvar(const char* tableName, const char* propName) const;
 	void dump();
 private:
 	std::unordered_map<std::string, RecvTable*> m_Tables;
-	uintptr_t getProp(const char* tableName, const char* propName, RecvProp** prop = nullptr) const;
-	uintptr_t getProp(RecvTable* recvTable, const char* propName, RecvProp** prop = nullptr) const;
-	RecvTable* getTable(const char* tableName) const;
-	std::string getType(RecvProp* recvTable) const;
+	[[nodiscard]] uintptr_t getProp(const char* tableName, const char* propName, RecvProp** prop = nullptr) const;
+	[[nodiscard]] uintptr_t getProp(RecvTable* recvTable, const char* propName, RecvProp** prop = nullptr) const;
+	[[nodiscard]] RecvTable* getTable(const char* tableName) const;
+	[[nodiscard]] std::string getType(RecvProp* recvTable) const;
 	void dump(RecvTable* recvTable);
 	std::ofstream file;
 } inline netvarMan;

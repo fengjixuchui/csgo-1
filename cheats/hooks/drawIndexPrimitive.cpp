@@ -1,9 +1,11 @@
 #include "hooks.hpp"
 
-#include "../../utilities/utilities.hpp"
-#include "../../SDK/structs/Entity.hpp"
-#include "../../SDK/IClientEntityList.hpp"
-#include "../../SDK/IVEngineClient.hpp"
+#include <gamememory/memory.hpp>
+#include <SDK/structs/Entity.hpp>
+#include <SDK/IClientEntityList.hpp>
+#include <SDK/IVEngineClient.hpp>
+#include <game/globals.hpp>
+#include <game/game.hpp>
 
 static void* getStack(void** data)
 {
@@ -12,7 +14,7 @@ static void* getStack(void** data)
 
 	void** next = *reinterpret_cast<void***>(data);
 
-	const static auto retAddr = reinterpret_cast<void*>(utilities::patternScan(STUDIORENDER_DLL, R_STUDIODRAWPOINTS));
+	const static auto retAddr = g_Memory.m_renderDrawPoints();
 	if (data[1] == retAddr)
 		return next[4];
 
@@ -35,17 +37,17 @@ long __stdcall hooks::drawIndexedPrimitive::hooked(IDirect3DDevice9* device, D3D
 	if (!ent)
 		return res;
 
-	auto local = reinterpret_cast<Player_t*>(interfaces::entList->getClientEntity(interfaces::engine->getLocalPlayer()));
-	if (!local)
+	
+	if (!game::localPlayer)
 		return res;
 
-	if (ent == local)
+	if (ent == game::localPlayer)
 		return res;
 
 	if (!ent->isAlive())
 		return res;
 
-	if (local->m_iTeamNum() != ent->m_iTeamNum())
+	if (ent->isOtherTeam(game::localPlayer()))
 	{
 
 		// draw here

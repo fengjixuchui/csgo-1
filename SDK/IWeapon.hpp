@@ -1,6 +1,7 @@
 #pragma once
-#include "../utilities/pad.hpp"
-#include "../utilities/vfunc.hpp"
+
+#include <utilities/pad.hpp>
+#include <utilities/vfunc.hpp>
 
 class WeaponInfo
 {

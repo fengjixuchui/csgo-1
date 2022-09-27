@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../utilities/pad.hpp"
+#include <utilities/pad.hpp>
 
 class INetChannel;
 class IClientState

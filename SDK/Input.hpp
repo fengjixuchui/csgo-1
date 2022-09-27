@@ -1,8 +1,10 @@
 #pragma once
-#include "../utilities/pad.hpp"
-#include "../utilities/vfunc.hpp"
+
 #include "math/Vector.hpp"
 #include "CUserCmd.hpp"
+
+#include <utilities/pad.hpp>
+#include <utilities/vfunc.hpp>
 
 class Input
 {

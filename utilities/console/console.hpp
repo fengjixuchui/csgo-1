@@ -1,90 +1,29 @@
 #pragma once
 
-#include <Windows.h>
+#include "consoleUtils.hpp"
+
+#include <menu/GUI-ImGui/imguiaddons.hpp>
+#include <utilities/utilities.hpp>
+#include <utilities/tools/tools.hpp>
+#include <utilities/tools/wrappers.hpp>
+#include <config/config.hpp>
+
 #include <string>
-#include <map>
+#include <unordered_map>
 #include <iostream>
 #include <fstream>
-#include <format>
-#include <cassert>
-#include <locale>
 #include <mutex>
+#include <cassert>
 
-#include "../../SDK/Color.hpp"
-#include "../../config/config.hpp"
-#include "../../cheats/menu/GUI-ImGui/imguiaddons.hpp"
-
-enum class TypeLogs : size_t
-{
-	// use it when color is not needed
-	LOG_NO,
-	LOG_INFO,
-	LOG_ERR,
-	LOG_WARN
-};
+struct SDKColor;
 
 class Console
 {
 public:
 	bool init(const std::string& title, const std::string& logName);
 	void shutdown();
-	constexpr std::string getLogName() const { return m_logName; }
 	void drawLog();
 	constexpr void changeActiveLog() { m_activeLog = !m_activeLog; }
-private:
-#pragma region maps_and_colors
-	enum class ColorsConsole : size_t
-	{
-		CONSOLE_WHITE = FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE,
-		CONSOLE_BLACK = NULL,
-		CONSOLE_DARKBLUE = FOREGROUND_BLUE,
-		CONSOLE_DARKGREEN = FOREGROUND_GREEN,
-		CONSOLE_DARKCYAN = FOREGROUND_GREEN | FOREGROUND_BLUE,
-		CONSOLE_DARKRED = FOREGROUND_RED,
-		CONSOLE_DARKMAGENTA = FOREGROUND_RED | FOREGROUND_BLUE,
-		CONSOLE_DARKYELLOW = FOREGROUND_RED | FOREGROUND_GREEN,
-		CONSOLE_DARKGRAY = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE,
-		CONSOLE_GRAY = FOREGROUND_INTENSITY,
-		CONSOLE_BLUE = FOREGROUND_INTENSITY | FOREGROUND_BLUE,
-		CONSOLE_GREEN = FOREGROUND_INTENSITY | FOREGROUND_GREEN,
-		CONSOLE_CYAN = FOREGROUND_INTENSITY | FOREGROUND_GREEN | FOREGROUND_BLUE,
-		CONSOLE_RED = FOREGROUND_INTENSITY | FOREGROUND_RED,
-		CONSOLE_MAGENTA = FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_BLUE,
-		CONSOLE_YELLOW = FOREGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN,
-	};
-
-	std::map<TypeLogs, ColorsConsole> colorsForConsole =
-	{
-		{TypeLogs::LOG_NO, ColorsConsole::CONSOLE_WHITE},
-		{TypeLogs::LOG_INFO, ColorsConsole::CONSOLE_GREEN},
-		{TypeLogs::LOG_ERR, ColorsConsole::CONSOLE_DARKRED},
-		{TypeLogs::LOG_WARN, ColorsConsole::CONSOLE_YELLOW}
-	};
-
-	std::map<TypeLogs, const char*> consoleStrings =
-	{
-		{TypeLogs::LOG_NO, ""},
-		{TypeLogs::LOG_INFO, "[info] "},
-		{TypeLogs::LOG_ERR, "[err] "},
-		{TypeLogs::LOG_WARN, "[warn] "},
-	};
-
-	std::map<TypeLogs, SDKColor> colorsForView =
-	{
-		{TypeLogs::LOG_NO, Colors::White },
-		{TypeLogs::LOG_INFO, Colors::Green },
-		{TypeLogs::LOG_ERR, Colors::Red },
-		{TypeLogs::LOG_WARN, Colors::Yellow }
-	};
-
-#pragma endregion
-	void setColor(ColorsConsole color);
-	void reset();
-
-	std::string m_logName;
-	ImGui::ExampleAppLog m_log;
-	bool m_activeLog = false;
-	std::mutex mutex;
 public:
 	// logs into console + draw + file
 	template<typename... Args_t>
@@ -94,6 +33,18 @@ public:
 	// There is no date, no automatic newline
 	template<typename... Args_t>
 	void print(const std::string& fmt, Args_t&&... args);
+private:
+	std::unordered_map<TypeLogs, ColorsConsole> colorsForConsole;
+	std::unordered_map<TypeLogs, std::string_view> consoleStrings;
+	std::unordered_map<TypeLogs, SDKColor> colorsForView;
+
+	void setColor(ColorsConsole color);
+	void reset();
+
+	std::string m_logName;
+	ImGui::ExampleAppLog m_log;
+	bool m_activeLog = false;
+	std::mutex mutex;
 };
 
 // sorry for using cout

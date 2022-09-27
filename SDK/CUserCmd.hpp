@@ -1,7 +1,9 @@
 #pragma once
+
 #include "math/Vector.hpp"
 #include "checksum_crc.hpp"
-#include "../utilities/pad.hpp"
+
+#include <utilities/pad.hpp>
 
 class CUserCmd
 {

@@ -1,4 +1,5 @@
 #pragma once
+
 #include <cstddef>
 
 #define CONCAT_IMPL(x, y) x##y

@@ -1,14 +1,20 @@
 #pragma once
 
-#include "../../../SDK/IPrediction.hpp"
+#include <classes/onlyInit.hpp>
+#include <SDK/IPrediction.hpp>
 
 #include <functional>
 
 class CUserCmd;
 
-class Prediction final
+class Prediction : public OnlyInitType
 {
 public:
+	constexpr Prediction() :
+		OnlyInitType{}
+	{}
+
+	virtual void init();
 	void addToPrediction(CUserCmd* cmd, const std::function<void()>& fun);
 	void update();
 private:
@@ -20,5 +26,4 @@ private:
 	CMoveData* m_data = {};
 };
 
-inline Prediction prediction;
-
+[[maybe_unused]] inline auto g_Prediction = Prediction{};

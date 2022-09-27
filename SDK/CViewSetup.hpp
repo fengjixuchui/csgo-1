@@ -1,7 +1,8 @@
 #pragma once
 
 #include "math/Vector.hpp"
-#include "../utilities/pad.hpp"
+
+#include <utilities/pad.hpp>
 
 class CViewSetup
 {
@@ -41,13 +42,5 @@ public:
 	float m_offCenterBottom;
 	float m_offCenterLeft;
 	float m_offCenterRight;
-	bool m_offCenter : 1;
-	bool m_renderToSubrectOfLargerScreen : 1;
-	bool m_doBloomAndToneMapping : 1;
-	bool m_doDepthOfField : 1;
-	bool m_HDRTarget : 1;
-	bool m_drawWorldNormal : 1;
-	bool m_cullFontFaces : 1;
-	bool m_cacheFullSceneState : 1;
-	bool m_CSMView : 1;
+	int m_edgeBlur;
 };

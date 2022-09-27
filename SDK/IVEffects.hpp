@@ -1,7 +1,9 @@
 #pragma once
+
 #include "math/Vector.hpp"
 #include "Color.hpp"
-#include "../utilities/vfunc.hpp"
+
+#include <utilities/vfunc.hpp>
 
 enum
 {
@@ -22,10 +24,10 @@ private:
 	struct DColor
 	{
 		DColor() = default;
-		DColor(uint8_t _r, uint8_t _g, uint8_t _b)
+		constexpr DColor(uint8_t _r, uint8_t _g, uint8_t _b)
 			: r{ _r }, g{ _g }, b{ _b }
 		{}
-		DColor(const Color& clr)
+		constexpr DColor(const Color& clr)
 			: r{ clr.rMultiplied() }, g{ clr.gMultiplied() }, b{ clr.bMultiplied() }
 		{}
 

@@ -1,8 +1,6 @@
 #pragma once
 
 #include <array>
-#include <vector>
-#include <string>
 
 namespace selections
 {
@@ -132,5 +130,43 @@ namespace selections
 		"effects/underwater_overlay",
 		"effects/survival_zone_projection_distancefield_inv",
 		"dev/screenhighlight_pulse",
+	};
+
+	inline std::array aimbotMethods =
+	{
+		"Crosshair",
+		"Dynamic"
+	};
+
+	inline std::array backtrackAim =
+	{
+		"Last tick",
+		"Closest"
+	};
+
+	inline std::array beamNames =
+	{
+		"sprites/blueglow1.vmt",
+		"sprites/bubble.vmt",
+		"sprites/glow01.vmt",
+		"sprites/physbeam.vmt",
+		"sprites/purpleglow1.vmt",
+		"sprites/purplelaser1.vmt",
+		"sprites/radio.vmt",
+		"sprites/white.vmt",
+	};
+
+	inline std::array aimbotWeapons
+	{
+		"Riffle",
+		"Smg",
+		"Machine Gun",
+		"Pistol",
+		"Deagle",
+		"Revolver",
+		"Scout",
+		"Awp",
+		"Auto sniper",
+		"Shotgun"
 	};
 }

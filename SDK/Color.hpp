@@ -1,9 +1,10 @@
 #pragma once
+
 #include <cstdint>
 #include <array>
 #include <stdexcept>
 
-using ImU32 = size_t;
+using ImU32 = unsigned int;
 struct ImVec4;
 
 // 0.0 - 1.0, you can pass ints as 0-255 though
@@ -36,31 +37,34 @@ public:
 	constexpr void setAlpha(float a) { m_color.at(3) = a; }
 	constexpr void setAlphaInt(int a) { m_color.at(3) = a / 255.0f; }
 
-	_NODISCARD constexpr float r() const { return m_color.at(0); }
-	_NODISCARD constexpr float g() const { return m_color.at(1); }
-	_NODISCARD constexpr float b() const { return m_color.at(2); }
-	_NODISCARD constexpr float a() const { return m_color.at(3); }
+	[[nodiscard]] constexpr float r() const { return m_color.at(0); }
+	[[nodiscard]] constexpr float g() const { return m_color.at(1); }
+	[[nodiscard]] constexpr float b() const { return m_color.at(2); }
+	[[nodiscard]] constexpr float a() const { return m_color.at(3); }
 
-	_NODISCARD static ImVec4 getImguiColor(const Color& color);
+	[[nodiscard]] static ImVec4 getImguiColor(const Color& color);
 	// edits alpha
-	_NODISCARD Color getColorEditAlpha(const float amount) const;
-	_NODISCARD Color getColorEditAlphaInt(const int amount) const;
+	[[nodiscard]] Color getColorEditAlpha(const float amount) const;
+	[[nodiscard]] Color getColorEditAlphaInt(const int amount) const;
 
-	_NODISCARD constexpr uint8_t rMultiplied() const { return static_cast<uint8_t>(m_color.at(0) * 255.0f); }
-	_NODISCARD constexpr uint8_t gMultiplied() const { return static_cast<uint8_t>(m_color.at(1) * 255.0f); }
-	_NODISCARD constexpr uint8_t bMultiplied() const { return static_cast<uint8_t>(m_color.at(2) * 255.0f); }
-	_NODISCARD constexpr uint8_t aMultiplied() const { return static_cast<uint8_t>(m_color.at(3) * 255.0f); }
+	[[nodiscard]] constexpr uint8_t rMultiplied() const { return static_cast<uint8_t>(m_color.at(0) * 255.0f); }
+	[[nodiscard]] constexpr uint8_t gMultiplied() const { return static_cast<uint8_t>(m_color.at(1) * 255.0f); }
+	[[nodiscard]] constexpr uint8_t bMultiplied() const { return static_cast<uint8_t>(m_color.at(2) * 255.0f); }
+	[[nodiscard]] constexpr uint8_t aMultiplied() const { return static_cast<uint8_t>(m_color.at(3) * 255.0f); }
 
 	constexpr const float& operator[](int index) const { return m_color.at(index); }
-	constexpr float& operator[](int index) { return m_color.at(index); }
-	constexpr const float& at(int index) const { if (index >= m_color.size() || index < 0) throw std::runtime_error("Out of range!"); return m_color.at(index); } // as std, at() is safe
-	constexpr float& at(int index) { if (index >= m_color.size() || index < 0) throw std::runtime_error("Out of range!"); return m_color.at(index); }
+	constexpr float& operator[](size_t index) { return m_color.at(index); }
+	constexpr const float& at(size_t index) const { if (index >= m_color.size()) throw std::runtime_error("Out of range!"); return m_color.at(index); } // as std, at() is safe
+	constexpr float& at(size_t index) { if (index >= m_color.size()) throw std::runtime_error("Out of range!"); return m_color.at(index); }
 	constexpr bool operator == (const Color& rhs) const { return (*((uintptr_t*)this) == *((uintptr_t*)&rhs)); }
 	constexpr bool operator != (const Color& rhs) const { return !(operator==(rhs)); }
-	_NODISCARD static Color fromHSB(float hue, float saturation, float brightness);
+	[[nodiscard]] static Color fromHSB(float hue, float saturation, float brightness);
 	//https://gist.github.com/mjackson/5311256
-	_NODISCARD static Color hslToRGB(float hue, float saturation, float lightness);
-	_NODISCARD static Color rainbowColor(const float gameTime, const float multiply = 0.5f); // http://basecase.org/env/on-rainbows
+	[[nodiscard]] static Color hslToRGB(float hue, float saturation, float lightness);
+	[[nodiscard]] static Color rainbowColor(const float gameTime, const float multiply = 0.5f); // http://basecase.org/env/on-rainbows
+	// health 0-100
+	[[nodiscard]] static Color healthBased(uint8_t health, uint8_t alpha = 255);
+	[[nodiscard]] static ImU32 U32(const Color& color);
 private:
 	std::array<float, 4> m_color;
 };
@@ -98,5 +102,3 @@ namespace Colors
 	inline Color Blank = Color(0, 0, 0, 0);
 	inline Color Orange = Color(255, 125, 0, 255);
 }
-
-_NODISCARD ImU32 U32(const Color& color);

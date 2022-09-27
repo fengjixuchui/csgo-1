@@ -85,16 +85,4 @@ namespace interfaces
 	inline IFileSystem* fileSystem = nullptr;
 
 	bool init();
-
-	inline bool done = false;
-}
-
-namespace gameFunctions
-{	
-	using tfn = void(__thiscall*)(CTeslaInfo&);
-	inline tfn tesla = nullptr;
-	using dfn = int(__fastcall*)(const char* name, const CEffectData&);
-	inline dfn dispatchEffect = nullptr;
-	// it's usercall
-	//using dfnp = void(__thiscall*)(const char* particleName, const Vector&, const Vector&, void*, int);
 }

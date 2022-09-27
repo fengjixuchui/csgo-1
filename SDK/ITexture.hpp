@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../utilities/pad.hpp"
-#include "../utilities/vfunc.hpp"
+#include <utilities/pad.hpp>
+#include <utilities/vfunc.hpp>
 
 struct IDirect3DTexture9;
 

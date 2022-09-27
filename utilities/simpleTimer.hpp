@@ -1,6 +1,6 @@
 #pragma once
+
 #include <chrono>
-#include "utilities.hpp"
 
 // simple mcs chrono timer
 class TimeCount
@@ -29,7 +29,7 @@ public:
 
     double getSec() const
     {
-        double timePassed = elapsed().count();
+        double timePassed = static_cast<double>(elapsed().count());
         timePassed *= 1e-6;
         return timePassed;
     }

@@ -1,7 +1,9 @@
 #pragma once
+
 #include "CUtlVector.hpp"
-#include "../utilities/pad.hpp"
-#include "../utilities/vfunc.hpp"
+
+#include <utilities/pad.hpp>
+#include <utilities/vfunc.hpp>
 
 class IConVar
 {

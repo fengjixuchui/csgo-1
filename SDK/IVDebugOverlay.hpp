@@ -1,6 +1,8 @@
 #pragma once
+
 #include "math/Vector.hpp"
-#include "../utilities/vfunc.hpp"
+
+#include <utilities/vfunc.hpp>
 
 class IVDebugOverlay
 {

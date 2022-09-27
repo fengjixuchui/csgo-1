@@ -1,10 +1,12 @@
 #pragma once
-#include <string>
 
 #include "material.hpp"
 
-#include "../utilities/utilities.hpp"
-#include "../utilities/pad.hpp"
+#include <utilities/tools/tools.hpp>
+#include <utilities/pad.hpp>
+#include <utilities/vfunc.hpp>
+
+#include <string>
 
 class IVStudioRender
 {

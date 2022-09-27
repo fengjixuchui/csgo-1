@@ -1,17 +1,12 @@
 #include "hooks.hpp"
 
-#include "../../SDK/interfaces/interfaces.hpp"
+#include "../classes/doPostScreen.hpp"
 
-#include "../features/visuals/glow.hpp"
-#include "../features/misc/misc.hpp"
-#include "../features/visuals/world.hpp"
-#include "../globals.hpp"
+#include <SDK/interfaces/interfaces.hpp>
 
 int __stdcall hooks::doPostScreenEffects::hooked(int val)
 {
-	glow.run();
-	misc.thirdperson();
-	world.removeSky(globals::isShutdown);
+	DoPostScreenType::runAll();
 
 	return original(interfaces::clientMode, val);
 }

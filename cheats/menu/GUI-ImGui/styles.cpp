@@ -1,5 +1,6 @@
 #include "styles.hpp"
-#include "../../../dependencies/ImGui/imgui.h"
+
+#include <dependencies/ImGui/imgui.h>
 
 void styles::runCherry()
 {
