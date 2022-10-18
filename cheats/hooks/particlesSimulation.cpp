@@ -34,48 +34,49 @@ constexpr std::array bloodnames =
 	"blood_impact_light_headshot"
 };
 
-void __fastcall hooks::particlesSimulations::hooked(CParticleCollection* thisPtr, void* edx)
+void __fastcall hooks::particlesSimulations::hooked(FAST_ARGS)
 {
-	original(thisPtr);
+	original(thisptr);
 
-	CParticleCollection* root = thisPtr;
+	auto ptr = reinterpret_cast<CParticleCollection*>(thisptr);
+	CParticleCollection* root = ptr;
 	while (root->m_parent)
 		root = root->m_parent;
 
 	std::string_view name = root->m_def.m_obj->m_name.m_buffer;
-	CfgColor colorMolly = config.get<CfgColor>(vars.cEditMolotov);
-	CfgColor colorBlood = config.get<CfgColor>(vars.cEditBlood);
-	CfgColor colorSmoke = config.get<CfgColor>(vars.cEditSmoke);
+	Color colorMolly = vars::visuals->world->particles->colorMolotov();
+	Color colorBlood = vars::visuals->world->particles->colorBlood();
+	Color colorSmoke = vars::visuals->world->particles->colorSmoke();
 
-	if (config.get<bool>(vars.bEditEffectsSmoke))
+	if (vars::visuals->world->particles->enabledSmoke)
 	{
 		if (auto itr = std::find(smokenames.cbegin(), smokenames.cend(), name); itr != smokenames.cend())
 		{
-			for (auto i : std::views::iota(0, thisPtr->m_activeParticles))
+			for (auto i : std::views::iota(0, ptr->m_activeParticles))
 			{
-				thisPtr->m_particleAttributes.modulateColor(colorSmoke.getColor(), i);
+				ptr->m_particleAttributes.modulateColor(colorSmoke, i);
 			}
 		}
 	}
 
-	if (config.get<bool>(vars.bEditEffectsBlood))
+	if (vars::visuals->world->particles->enabledBlood)
 	{
 		if (auto itr = std::find(bloodnames.cbegin(), bloodnames.cend(), name); itr != bloodnames.cend())
 		{
-			for (auto i : std::views::iota(0, thisPtr->m_activeParticles))
+			for (auto i : std::views::iota(0, ptr->m_activeParticles))
 			{
-				thisPtr->m_particleAttributes.modulateColor(colorBlood.getColor(), i);
+				ptr->m_particleAttributes.modulateColor(colorBlood, i);
 			}
 		}
 	}
 
-	if (config.get<bool>(vars.bEditEffectsMoly))
+	if (vars::visuals->world->particles->enabledMolotov)
 	{
 		if (auto itr = std::find(mollyNames.cbegin(), mollyNames.cend(), name); itr != mollyNames.cend())
 		{
-			for (auto i : std::views::iota(0, thisPtr->m_activeParticles))
+			for (auto i : std::views::iota(0, ptr->m_activeParticles))
 			{
-				thisPtr->m_particleAttributes.modulateColor(colorMolly.getColor(), i);
+				ptr->m_particleAttributes.modulateColor(colorMolly, i);
 			}
 		}
 	}

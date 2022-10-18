@@ -28,9 +28,9 @@ void BombOverlay::init()
 {
 	m_timer = interfaces::cvar->findVar(XOR("mp_c4timer"));
 
-	g_Events.add(XOR("bomb_planted"), std::bind(&BombOverlay::handleWhoPlanted, this, std::placeholders::_1));
-	g_Events.add(XOR("bomb_exploded"), std::bind(&BombOverlay::handleBombExplode, this, std::placeholders::_1));
-	g_Events.add(XOR("round_prestart"), std::bind(&BombOverlay::handleResetBomb, this, std::placeholders::_1));
+	g_Events->add(XOR("bomb_planted"), std::bind(&BombOverlay::handleWhoPlanted, this, std::placeholders::_1));
+	g_Events->add(XOR("bomb_exploded"), std::bind(&BombOverlay::handleBombExplode, this, std::placeholders::_1));
+	g_Events->add(XOR("round_prestart"), std::bind(&BombOverlay::handleResetBomb, this, std::placeholders::_1));
 }
 
 void BombOverlay::draw()
@@ -41,8 +41,7 @@ void BombOverlay::draw()
 	if (!m_bombEnt)
 		return;
 
-	bool& ref = config.getRef<bool>(vars.bDrawBomb);
-	if (!ref)
+	if (!vars::visuals->world->bomb->enabled)
 		return;
 
 	const auto bombent = reinterpret_cast<Bomb_t*>(m_bombEnt);
@@ -77,8 +76,8 @@ void BombOverlay::draw()
 
 	constexpr ImVec2 size = { 300, 150 };
 	ImGui::SetNextWindowSize(size);
-	ImGui::PushStyleColor(ImGuiCol_WindowBg, Color::U32(config.get<CfgColor>(vars.cBombBackground).getColor()));
-	if (ImGui::Begin(XOR("Bomb c4"), &ref, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize))
+	ImGui::PushStyleColor(ImGuiCol_WindowBg, Color::U32(vars::visuals->world->bomb->background()));
+	if (ImGui::Begin(XOR("Bomb c4"), &vars::visuals->world->bomb->enabled, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize))
 	{
 		imRenderWindow.addList();
 
@@ -138,11 +137,11 @@ void BombOverlayEntGrabber::run(int frame)
 	if (frame != FRAME_RENDER_START)
 		return;
 
-	for (auto [entity, idx, classID] : g_EntCache.getCache(EntCacheType::WORLD_ENTS))
+	for (auto [entity, idx, classID] : EntityCache::getCache(EntCacheType::WORLD_ENTS))
 	{
 		if (classID != CPlantedC4)
 			continue;
 
-		g_BombOverlay.m_bombEnt = reinterpret_cast<Bomb_t*>(entity);
+		g_BombOverlay->m_bombEnt = reinterpret_cast<Bomb_t*>(entity);
 	}
 }

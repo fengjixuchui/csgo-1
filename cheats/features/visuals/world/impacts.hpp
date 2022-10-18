@@ -7,53 +7,56 @@
 
 class IGameEvent;
 
-class BulletImpactsClient : public RenderableSurfaceType
+class BulletImpactsClient : protected RenderableSurfaceType
 {
 public:
 	constexpr BulletImpactsClient() :
 		RenderableSurfaceType{}
 	{}
 
-	virtual void init();
-	virtual void draw();
+protected:
+	virtual void draw() override;
 private:
 	struct ClientHitVerify_t
 	{
-		Vector m_pos;
+		Vec3 m_pos;
 		float m_time;
 		float m_expire;
 	};
 
 	struct HitStruct_t
 	{
-		Vector m_pos;
+		Vec3 m_pos;
 		float m_expire;
 	};
 
 	std::vector<HitStruct_t> m_hitsClientSide;
 };
 
-[[maybe_unused]] inline auto g_BulletImpactsClient = BulletImpactsClient{};
+GLOBAL_FEATURE(BulletImpactsClient);
 
-class BulletImpactsLocal : RenderableSurfaceType
+class BulletImpactsLocal : protected RenderableSurfaceType
 {
 public:
 	constexpr BulletImpactsLocal() :
 		RenderableSurfaceType{}
 	{}
 
-	virtual void init();
-	virtual void draw();
+protected:
+	virtual void draw() override;
+	virtual void init() override;
+	virtual void reset() override {};
+	virtual void shutdown() override {};
 private:
 	void pushBullet(IGameEvent* event);
 	struct HitStructLocal_t
 	{
-		Vector m_start;
-		Vector m_end;
+		Vec3 m_start;
+		Vec3 m_end;
 		float m_expire;
 	};
 
 	std::vector<HitStructLocal_t> m_hitsLocal;
 };
 
-[[maybe_unused]] inline auto g_BulletImpactsLocal = BulletImpactsLocal{};
+GLOBAL_FEATURE(BulletImpactsLocal);

@@ -10,14 +10,9 @@
 #include <utilities/tools/tools.hpp>
 #include <utilities/renderer/renderer.hpp>
 
-void NoScope::init()
-{
-
-}
-
 void NoScope::draw()
 {
-	if (!config.get<bool>(vars.bNoScope))
+	if (!vars::misc->scope->enabled)
 		return;
 
 	if (!game::isAvailable())
@@ -44,5 +39,5 @@ void NoScopeBlur::init()
 
 void NoScopeBlur::run()
 {
-	m_blurScope->setMaterialVarFlag(MATERIAL_VAR_NO_DRAW, config.get<bool>(vars.bNoScope));
+	m_blurScope->setMaterialVarFlag(MATERIAL_VAR_NO_DRAW, vars::misc->scope->enabled);
 }

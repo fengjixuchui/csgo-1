@@ -15,11 +15,6 @@
 #include <utilities/tools/wrappers.hpp>
 #include <utilities/tools/tools.hpp>
 
-void Flashlight::init()
-{
-
-}
-
 CFlashlightEffect* Flashlight::createFlashlight(float fov, Entity_t* ent, const char* effectName,
 	float farZ, float linearAtten)
 {
@@ -48,7 +43,7 @@ void Flashlight::destroyFlashLight(CFlashlightEffect* flashlight)
 	g_Memory.m_flashlightDestroy()(flashlight, nullptr); // second arg is not even used there
 }
 
-void Flashlight::updateFlashlight(CFlashlightEffect* flashlight, const Vector& pos, const Vector& forward, const Vector& right, const Vector& up)
+void Flashlight::updateFlashlight(CFlashlightEffect* flashlight, const Vec3& pos, const Vec3& forward, const Vec3& right, const Vec3& up)
 {
 	g_Memory.m_flashlightUpdate()(flashlight, flashlight->m_entIndex, pos, forward, right, up, flashlight->m_fov, flashlight->m_farZ, flashlight->m_LinearAtten, flashlight->m_castsShadows, flashlight->m_textureName);
 }
@@ -67,10 +62,10 @@ void Flashlight::run(int frame)
 	if (!game::localPlayer->isAlive())
 		return;
 
-	if (!config.get<bool>(vars.bFlashlight))
+	if (!vars::misc->flashLight->enabled)
 		return;
 
-	auto key = config.get<Key>(vars.kFlashlight);
+	auto key = vars::keys->flashLight;
 	switch (key.getKeyMode())
 	{
 	case KeyMode::DOWN:
@@ -82,7 +77,7 @@ void Flashlight::run(int frame)
 			if (!done)
 			{
 				interfaces::surface->playSound(XOR("items\\flashlight1.wav"));
-				m_flashlight = createFlashlight(config.get<float>(vars.fFlashlightFov), game::localPlayer());
+				m_flashlight = createFlashlight(vars::misc->flashLight->fov, game::localPlayer());
 				done = true;
 			}
 		}
@@ -110,7 +105,7 @@ void Flashlight::run(int frame)
 				m_flashlight = nullptr;
 			}
 			else
-				m_flashlight = createFlashlight(config.get<float>(vars.fFlashlightFov), game::localPlayer());
+				m_flashlight = createFlashlight(vars::misc->flashLight->fov, game::localPlayer());
 		}
 
 		break;
@@ -120,14 +115,14 @@ void Flashlight::run(int frame)
 	if (!m_flashlight)
 		return;
 
-	Vector angle;
+	Vec3 angle;
 	interfaces::engine->getViewAngles(angle);
 	auto [forward, right, up] = math::angleVectors(angle);
 
 	m_flashlight->m_isOn = true;
 	m_flashlight->m_castsShadows = true;
-	m_flashlight->m_bigMode = config.get<bool>(vars.bFlashlightBigMode);
-	m_flashlight->m_fov = config.get<float>(vars.fFlashlightFov);
+	m_flashlight->m_bigMode = vars::misc->flashLight->bigMode;
+	m_flashlight->m_fov = vars::misc->flashLight->fov;
 
 	updateFlashlight(m_flashlight, game::localPlayer->getEyePos(), forward, right, up);
 }

@@ -18,11 +18,6 @@
 #include <utilities/rand.hpp>
 #include <dependencies/ImGui/imgui.h>
 
-void WeatherController::init()
-{
-
-}
-
 void WeatherController::run(int frame)
 {
 	if (frame != FRAME_RENDER_START)
@@ -61,7 +56,7 @@ void WeatherController::run(int frame)
 	};
 
 	// it will only actually reset when the rain is created
-	if (globals::isShutdown || !config.get<bool>(vars.bWeather))
+	if (globals::isShutdown || !vars::visuals->world->weather->enabled)
 	{
 		reset();
 		return;
@@ -77,16 +72,16 @@ void WeatherController::run(int frame)
 		if (!m_weather.m_ent)
 			return;
 
-		constexpr float halfP = Vector::MAX_ARG / 2.0f;
-		constexpr float halfM = -Vector::MAX_ARG / 2.0f;
+		constexpr float halfP = Vec3::MAX_ARG / 2.0f;
+		constexpr float halfM = -Vec3::MAX_ARG / 2.0f;
 
 		m_weather.m_ent->m_nPrecipType() = PRECIPITATION_TYPE_SNOW;
 
 		m_weather.m_ent->preDataUpdate(DATA_UPDATE_CREATED);
 		m_weather.m_ent->onPreDataChanged(DATA_UPDATE_CREATED);
 
-		m_weather.m_ent->collideable()->OBBMins() = { halfM, halfM, halfM };
-		m_weather.m_ent->collideable()->OBBMaxs() = { halfP, halfP, halfP };
+		m_weather.m_ent->collideable()->OBBMins() = Vec3{ halfM, halfM, halfM };
+		m_weather.m_ent->collideable()->OBBMaxs() = Vec3{ halfP, halfP, halfP };
 
 		m_weather.m_ent->onDataChanged(DATA_UPDATE_CREATED);
 		m_weather.m_ent->postDataUpdate(DATA_UPDATE_CREATED);
@@ -116,33 +111,33 @@ void WeatherController::implMenu()
 		std::make_pair(cvarWindSpeed, cvarWindSpeed->getFloat()),
 	};
 
-	if (ImGui::SliderFloat(XOR("r_rainlength"), &config.getRef<float>(vars.fWeatherRainLenght), 0.0f, 1.0f))
+	if (ImGui::SliderFloat(XOR("r_rainlength"), &vars::visuals->world->weather->length, 0.0f, 1.0f))
 	{
-		cvarLenght->setValue(config.get<float>(vars.fWeatherRainLenght));
+		cvarLenght->setValue(vars::visuals->world->weather->length);
 	}
-	if (ImGui::SliderFloat(XOR("r_rainspeed"), &config.getRef<float>(vars.fWeatherRainSpeed), 0.0f, 1000.0f))
+	if (ImGui::SliderFloat(XOR("r_rainspeed"), &vars::visuals->world->weather->rainSpeed, 0.0f, 1000.0f))
 	{
-		cvarRainSpeed->setValue(config.get<float>(vars.fWeatherRainSpeed));
+		cvarRainSpeed->setValue(vars::visuals->world->weather->rainSpeed);
 	}
-	if (ImGui::SliderFloat(XOR("r_rainradius"), &config.getRef<float>(vars.fWeatherRainRadius), 0.0f, 3000.0f))
+	if (ImGui::SliderFloat(XOR("r_rainradius"), &vars::visuals->world->weather->radius, 0.0f, 3000.0f))
 	{
-		cvarRadius->setValue(config.get<float>(vars.fWeatherRainRadius));
+		cvarRadius->setValue(vars::visuals->world->weather->radius);
 	}
-	if (ImGui::SliderFloat(XOR("r_rainwidth"), &config.getRef<float>(vars.fWeatherRainWidth), 0.0f, 5.0f))
+	if (ImGui::SliderFloat(XOR("r_rainwidth"), &vars::visuals->world->weather->width, 0.0f, 5.0f))
 	{
-		cvarWidth->setValue(config.get<float>(vars.fWeatherRainWidth));
+		cvarWidth->setValue(vars::visuals->world->weather->width);
 	}
-	if (ImGui::SliderFloat(XOR("r_RainSideVel"), &config.getRef<float>(vars.fWeatherRainSideVel), 0.0f, 1000.0f))
+	if (ImGui::SliderFloat(XOR("r_RainSideVel"), &vars::visuals->world->weather->velocity, 0.0f, 1000.0f))
 	{
-		cvarSidevel->setValue(config.get<float>(vars.fWeatherRainSideVel));
+		cvarSidevel->setValue(vars::visuals->world->weather->velocity);
 	}
-	if (ImGui::SliderFloat(XOR("r_rainalpha"), &config.getRef<float>(vars.fWeatherRainAlpha), 0.0f, 1.0f))
+	if (ImGui::SliderFloat(XOR("r_rainalpha"), &vars::visuals->world->weather->alpha, 0.0f, 1.0f))
 	{
-		cvarAlpha->setValue(config.get<float>(vars.fWeatherRainAlpha));
+		cvarAlpha->setValue(vars::visuals->world->weather->alpha);
 	}
-	if (ImGui::SliderFloat(XOR("cl_windspeed"), &config.getRef<float>(vars.fWeatherWindSpeed), 0.0f, 1000.0f))
+	if (ImGui::SliderFloat(XOR("cl_windspeed"), &vars::visuals->world->weather->windSpeed, 0.0f, 1000.0f))
 	{
-		cvarWindSpeed->setValue(config.get<float>(vars.fWeatherWindSpeed));
+		cvarWindSpeed->setValue(vars::visuals->world->weather->windSpeed);
 	}
 	if (ImGui::Button(XOR("Default rain cvars")))
 	{
@@ -151,12 +146,7 @@ void WeatherController::implMenu()
 	}
 }
 
-void WeatherReset::init()
-{
-
-}
-
 void WeatherReset::run(MapStruct* map)
 {
-	g_WeatherController.m_weather.m_created = false;
+	g_WeatherController->m_weather.m_created = false;
 }

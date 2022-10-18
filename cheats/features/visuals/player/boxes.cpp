@@ -8,36 +8,36 @@
 
 void BoxesDraw::drawBox2D(const Box& box, bool isDormant, float dormacyAlpha)
 {
-	Color cfgCol = isDormant
-		? config.get<CfgColor>(vars.cBox).getColor().getColorEditAlpha(dormacyAlpha)
-		: config.get<CfgColor>(vars.cBox).getColor();
+	Color color = isDormant
+		? vars::visuals->esp->boxes->color().getColorEditAlpha(dormacyAlpha)
+		: vars::visuals->esp->boxes->color();
 
 	Color outlineCol = isDormant
 		? Colors::Black.getColorEditAlpha(dormacyAlpha)
-		: Colors::Black.getColorEditAlpha(cfgCol.a());
+		: Colors::Black.getColorEditAlpha(color.a());
 
-	bool outlined = config.get<bool>(vars.bBoxOutlined);
+	bool outlined = vars::visuals->esp->boxes->outline;
 
 	if (outlined)
 	{
 		imRender.drawRect(box.x - 1.0f, box.y - 1.0f, box.w + 2.0f, box.h + 2.0f, outlineCol);
 		imRender.drawRect(box.x + 1.0f, box.y + 1.0f, box.w - 2.0f, box.h - 2.0f, outlineCol);
 	}
-	imRender.drawRect(box.x, box.y, box.w, box.h, cfgCol.getColorEditAlpha(dormacyAlpha));
+	imRender.drawRect(box.x, box.y, box.w, box.h, color);
 }
 
 
 void BoxesDraw::drawBox2DFilled(const Box& box, bool isDormant, float dormacyAlpha)
 {
-	Color fill = config.get<CfgColor>(vars.cBoxFill).getColor();
-	if (isDormant)
-		fill = fill.getColorEditAlpha(dormacyAlpha);
+	Color fill = isDormant
+		? vars::visuals->esp->boxes->fill().getColorEditAlpha(dormacyAlpha)
+		: vars::visuals->esp->boxes->fill();
 
-	if (!config.get<bool>(vars.bBoxMultiColor))
+	if (!vars::visuals->esp->boxes->multiColor)
 		imRender.drawRectFilled(box.x, box.y, box.w, box.h, fill);
 	else
 	{
-		float speed = config.get<float>(vars.fBoxMultiColor);
+		float speed = vars::visuals->esp->boxes->multiColorSpeed;
 		float time = interfaces::globalVars->m_curtime;
 
 		float alpha = fill.a();
@@ -63,13 +63,18 @@ static ImVec2 operator+(const ImVec2& v, float val)
 
 void BoxesDraw::drawBox3DFilled(const Box& box, bool isDormant, float dormacyAlpha, float thickness)
 {
-	Color fill = config.get<CfgColor>(vars.cBoxFill).getColor();
-	if (isDormant)
-		fill = fill.getColorEditAlpha(dormacyAlpha);
+	Color fill = isDormant
+		? vars::visuals->esp->boxes->fill().getColorEditAlpha(dormacyAlpha)
+		: vars::visuals->esp->boxes->fill();
 
 	bool outlined = /*config.get<bool>(vars.bBoxOutlined)*/ false; // looks bad on 3d
 
-	auto points = math::grahamScan(box.points);
+	auto maybeScanned = math::grahamScan(box.points);
+	if (!maybeScanned.has_value())
+		return;
+
+	auto points = maybeScanned.value();
+
 	std::reverse(points.begin(), points.end());
 	imRender.drawPolyGon(points, fill);
 
@@ -78,13 +83,13 @@ void BoxesDraw::drawBox3DFilled(const Box& box, bool isDormant, float dormacyAlp
 
 void BoxesDraw::drawBox3DFilledMultiColor(const Box& box, bool isDormant, float dormacyAlpha, float thickness)
 {
-	Color fill = config.get<CfgColor>(vars.cBoxFill).getColor();
-	if (isDormant)
-		fill = fill.getColorEditAlpha(dormacyAlpha);
+	Color fill = isDormant
+		? vars::visuals->esp->boxes->fill().getColorEditAlpha(dormacyAlpha)
+		: vars::visuals->esp->boxes->fill();
 
 	bool outlined = /*config.get<bool>(vars.bBoxOutlined)*/ false;
 
-	float speed = config.get<float>(vars.fBoxMultiColor);
+	float speed = vars::visuals->esp->boxes->multiColorSpeed;
 	float time = interfaces::globalVars->m_curtime;
 
 	float alpha = fill.a();
@@ -99,7 +104,12 @@ void BoxesDraw::drawBox3DFilledMultiColor(const Box& box, bool isDormant, float 
 		Color::U32(Color::rainbowColor(time + 5.0f, speed).getColorEditAlpha(alpha)),
 	};
 
-	auto points = math::grahamScan(box.points);
+	auto maybeScanned = math::grahamScan(box.points);
+	if (!maybeScanned.has_value())
+		return;
+
+	auto points = maybeScanned.value();
+
 	size_t delta = colors.size() - points.size();
 	std::reverse(points.begin(), points.end());
 	imRender.drawPolyGonMultiColor(points, colors); // any way to make it smooth trnasmition in vertex? I couldn't think of
@@ -110,8 +120,8 @@ void BoxesDraw::drawBox3DFilledMultiColor(const Box& box, bool isDormant, float 
 void BoxesDraw::drawBox3D(const Box& box, bool isDormant, float dormacyAlpha, float thickness)
 {
 	Color color = isDormant
-		? config.get<CfgColor>(vars.cBox).getColor().getColorEditAlpha(dormacyAlpha)
-		: config.get<CfgColor>(vars.cBox).getColor();
+		? vars::visuals->esp->boxes->color().getColorEditAlpha(dormacyAlpha)
+		: vars::visuals->esp->boxes->color();
 
 	bool outlined = /*config.get<bool>(vars.bBoxOutlined)*/ false;
 

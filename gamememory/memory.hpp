@@ -1,15 +1,18 @@
 #pragma once
 
+#include <SDK/math/Vector.hpp>
+#include <SDK/math/matrix.hpp>
+
 #include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <Windows.h>
+#include <variant>
+#include <type_traits>
 
 struct CClientEffectRegistration;
 class Player_t;
 class AnimationLayer;
-struct Matrix4x4;
-struct Vector;
 class CMoveData;
 class ClientMode;
 class IViewRenderBeams;
@@ -40,31 +43,52 @@ public:
 	struct Address
 	{
 	public:
-		Address() = default;
+		constexpr Address() = default;
 		// pass by offset
 		constexpr Address(uintptr_t addr) :
 			m_addr{ addr }
 		{}
+		constexpr Address(uintptr_t* addr) :
+			m_addr{ reinterpret_cast<uintptr_t>(addr) }
+		{}
+		constexpr Address(void* addr) :
+			m_addr{ reinterpret_cast<uintptr_t>(addr) }
+		{}
 
 		// raw place in memory as offset
-		uintptr_t getRawAddr() { return m_addr; }
+		constexpr auto getRawAddr() const { return m_addr; }
 		// cast to anything
-		template<typename type>
-		Address<type> cast() { return Address<type>{ m_addr }; }
+		template<typename K>
+		constexpr auto cast() const { return Address<K>{ m_addr }; }
 		// wrapper for sig scan, when error it throws one
 		Address<T> initAddr(const std::string& mod, const std::string& sig, uintptr_t offset = 0);
 		// add bytes, useful for creating "chains" with ref(), depends on use case.
-		Address<T> add(uintptr_t extraOffset) { return Address{ m_addr + extraOffset }; }
+		constexpr auto add(uintptr_t extraOffset) const { return Address{ m_addr + extraOffset }; }
 		// dereference x times. Possible args are: 1, 2, 3. There will for sure won't be a case for 4 level dereference. 3rd is very rare.
-		Address<T> ref(Dereference times = Dereference::ONCE);
-		// get as rel32 offset
-		Address<T> rel(uintptr_t extraOffset = 0)
+		constexpr auto ref(Dereference times = Dereference::ONCE) const
 		{
-			m_addr += extraOffset;
-			return (T)(m_addr + 4 + *reinterpret_cast<uintptr_t*>(m_addr));
+			auto addr = m_addr;
+
+			for ([[maybe_unused]] auto i : std::views::iota(0U, E2T(times)))
+				addr = *reinterpret_cast<uintptr_t*>(addr);
+
+			return Address<T>{ addr };
+		}
+		// get as rel32
+		constexpr auto rel(uintptr_t relOffset = 0x1, uintptr_t absOffset = 0x0) const
+		{
+			const auto jump = m_addr + relOffset;
+			const auto target = *reinterpret_cast<decltype(jump)*>(jump);
+			return Address<T>{ jump + absOffset + 0x4 + target };
 		}
 		// will work for classes types too
-		constexpr T operator()();
+		constexpr T operator()() const
+		{
+			if constexpr (std::is_class_v<T>)
+				return *reinterpret_cast<T*>(m_addr);
+			else
+				return (T)(m_addr);
+		}
 	private:
 		uintptr_t m_addr;
 	};
@@ -72,17 +96,17 @@ private:
 	using loadSky_t = void(__fastcall*)(const char*);
 	using findHud_t = uintptr_t*(__thiscall*)(void* /*uintptr_t*/, const char*);
 	using sequenceActivity_t = int(__fastcall*)(void*, void*, int);
-	using inSmoke_t = bool(__cdecl*)(Vector, Vector);
+	using inSmoke_t = bool(__cdecl*)(Vec3, Vec3);
 	using isBreakable_t = bool(__thiscall*)(void*);
 	using flashlightDestroy_t = void(__thiscall*)(void*, void*);
-	using flashlightUpdate_t =  void(__thiscall*)(void*, int, const Vector&, const Vector&, const Vector&, const Vector&, float, float, float, bool, const char*);
-	using setAbsOrigin_t = void(__thiscall*)(void*, const Vector&);
+	using flashlightUpdate_t =  void(__thiscall*)(void*, int, const Vec3&, const Vec3&, const Vec3&, const Vec3&, float, float, float, bool, const char*);
+	using setAbsOrigin_t = void(__thiscall*)(void*, const Vec3&);
 	using isC4Owner_t = bool(__thiscall*)(void*);
 	using teslaCreate_t = void(__thiscall*)(CTeslaInfo&);
 	using dispatchEffect_t = int(__fastcall*)(const char*, const CEffectData&);
 	using particleCached_t = bool(__thiscall*)(void*, const char*);
 	using particleFindString_t = void(__thiscall*)(void*, int*, const char*);
-	using setParticleControlPoint_t = void(__thiscall*)(void*, int, Vector*);
+	using setParticleControlPoint_t = void(__thiscall*)(void*, int, Vec3*);
 
 
 	std::pair<uintptr_t, bool> scan(const std::string& mod, const std::string& sig, const uintptr_t offsetToAdd = 0);
@@ -156,16 +180,5 @@ public:
 	Address<teslaCreate_t> m_tesla;
 	Address<dispatchEffect_t> m_dispatchEffect;
 };
-
-#include <type_traits>
-
-template<typename T>
-constexpr T Memory::Address<T>::operator()()
-{
-	if constexpr (std::is_class_v<T>)
-		return *reinterpret_cast<T*>(m_addr);
-	else
-		return (T)(m_addr);
-}
 
 [[maybe_unused]] inline auto g_Memory = Memory{};

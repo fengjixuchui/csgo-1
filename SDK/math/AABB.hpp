@@ -4,6 +4,6 @@
 
 struct AABB_t
 {
-	Vector m_minBounds;
-	Vector m_maxBounds;
+	Vec3 m_minBounds;
+	Vec3 m_maxBounds;
 };

@@ -1,5 +1,7 @@
 #include "radar.hpp"
 
+#include <features/cache/cache.hpp>
+
 #include <SDK/IVEngineClient.hpp>
 #include <SDK/CGlobalVars.hpp>
 #include <SDK/IClientEntityList.hpp>
@@ -21,19 +23,14 @@
 
 #include <d3dx9.h>
 
-void Radar::init()
+Vec2 Radar::entToRadar(const Vec3& eye, const Vec3& angles, const Vec3& entPos, const Vec2& pos, const Vec2& size, const float scale, bool clipRanges)
 {
-	
-}
+	float dotThickness = vars::misc->radar->thickness;
 
-Vector2D Radar::entToRadar(const Vector& eye, const Vector& angles, const Vector& entPos, const Vector2D& pos, const Vector2D& size, const float scale, bool clipRanges)
-{
-	float dotThickness = config.get<float>(vars.fRadarThickness);
+	float directionX = entPos[Coord::X] - eye[Coord::X];
+	float directionY = -(entPos[Coord::Y] - eye[Coord::Y]);
 
-	float directionX = entPos.x - eye.x;
-	float directionY = -(entPos.y - eye.y);
-
-	auto yawDeg = angles.y - 90.0f;
+	auto yawDeg = angles[Coord::Y] - 90.0f;
 	// calculate dots of radian and return correct view
 	const auto yawToRadian = math::DEG2RAD(yawDeg);
 	float dotX = (directionX * std::cos(yawToRadian) - directionY * std::sin(yawToRadian)) / 20.0f;
@@ -42,47 +39,47 @@ Vector2D Radar::entToRadar(const Vector& eye, const Vector& angles, const Vector
 	dotX *= scale;
 	dotY *= scale;
 	// correct it for our center screen of rectangle radar
-	dotX += size.x / 2.0f;
-	dotY += size.y / 2.0f;
+	dotX += size[Coord::X] / 2.0f;
+	dotY += size[Coord::Y] / 2.0f;
 
 	// do not draw out of range, added pos, even we pass 0, but for clarity
 	if (clipRanges)
 	{
-		if (!config.get<bool>(vars.bRadarRanges))
+		if (!vars::misc->radar->ranges)
 		{
-			if (dotX < pos.x)
+			if (dotX < pos[Coord::X])
 				return {}; // this is zero vector
 
-			if (dotX > pos.y + size.x - dotThickness)
+			if (dotX > pos[Coord::Y] + size[Coord::X] - dotThickness)
 				return {};
 
-			if (dotY < pos.y)
+			if (dotY < pos[Coord::Y])
 				return {};
 
-			if (dotY > pos.y + size.y - dotThickness)
+			if (dotY > pos[Coord::Y] + size[Coord::Y] - dotThickness)
 				return {};
 		}
 		else
 		{
-			if (dotX < pos.x)
-				dotX = pos.x;
+			if (dotX < pos[Coord::X])
+				dotX = pos[Coord::X];
 
-			if (dotX > pos.y + size.x - dotThickness)
-				dotX = pos.y + size.x - dotThickness;
+			if (dotX > pos[Coord::Y] + size[Coord::X] - dotThickness)
+				dotX = pos[Coord::Y] + size[Coord::X] - dotThickness;
 
-			if (dotY < pos.y)
-				dotY = pos.y;
+			if (dotY < pos[Coord::Y])
+				dotY = pos[Coord::Y];
 
-			if (dotY > pos.y + size.y - dotThickness)
-				dotY = pos.y + size.y - dotThickness;
+			if (dotY > pos[Coord::Y] + size[Coord::Y] - dotThickness)
+				dotY = pos[Coord::Y] + size[Coord::Y] - dotThickness;
 		}
 	}
 
 	// again correct for out center...
-	dotX += pos.x;
-	dotY += pos.y;
+	dotX += pos[Coord::X];
+	dotY += pos[Coord::Y];
 
-	return { dotX, dotY };
+	return Vec2{ dotX, dotY };
 }
 
 void Radar::manuallyInitPos()
@@ -118,10 +115,10 @@ bool Radar::manuallyInitTexture()
 		return false;*/
 
 	if (auto hr = D3DXCreateTextureFromFileA(interfaces::dx9Device, path.c_str(), &m_mapTexture); hr == D3D_OK)
-		console.log(TypeLogs::LOG_INFO, "Created map texture from path: {}", path);
+		LOG_INFO(XOR("Created map texture from path: {}"), path);
 	else
 	{
-		console.log(TypeLogs::LOG_ERR, "Creating map texture from path failed, code: {}", hr);
+		LOG_ERR(XOR("Creating map texture from path failed, code: {}"), hr);
 		return false;
 	}
 
@@ -132,9 +129,6 @@ Radar::MapPos Radar::getMapPos() const
 {
 	return MapPos{ m_pos, m_scale * 1000.0f };
 }
-
-#define TO_IMV2(name, vec2) ImVec2 name{ vec2.x, vec2.y }
-#define __TO_IMV2(name, vec2) name = { vec2.x, vec2.y }
 
 void Radar::drawMap()
 {
@@ -147,34 +141,28 @@ void Radar::drawMap()
 	float size = map.m_scale;
 	std::array poses =
 	{
-		Vector{ m_pos.x, m_pos.y, 0.0f },
-		Vector{ m_pos.x + size, m_pos.y, 0.0f },
-		Vector{ m_pos.x + size, m_pos.y - size, 0.0f },
-		Vector{ m_pos.x, m_pos.y - size, 0.0f },
+		Vec3{ m_pos[Coord::X], m_pos[Coord::Y], 0.0f },
+		Vec3{ m_pos[Coord::X] + size, m_pos[Coord::Y], 0.0f },
+		Vec3{ m_pos[Coord::X] + size, m_pos[Coord::Y] - size, 0.0f },
+		Vec3{ m_pos[Coord::X], m_pos[Coord::Y] - size, 0.0f },
 	};
 
 	const auto myEye = game::localPlayer->getEyePos();
-	Vector ang = {};
+	Vec3 ang = {};
 	interfaces::engine->getViewAngles(ang);
-	float scale = config.get<float>(vars.fRadarScale);
+	float scale = vars::misc->radar->scale;
 
-	auto _p1 = entToRadar(myEye, ang, poses.at(0), m_drawPos, m_drawSize, scale, false);
-	auto _p2 = entToRadar(myEye, ang, poses.at(1), m_drawPos, m_drawSize, scale, false);
-	auto _p3 = entToRadar(myEye, ang, poses.at(2), m_drawPos, m_drawSize, scale, false);
-	auto _p4 = entToRadar(myEye, ang, poses.at(3), m_drawPos, m_drawSize, scale, false);
-
-	TO_IMV2(p1, _p1);
-	TO_IMV2(p2, _p2);
-	TO_IMV2(p3, _p3);
-	TO_IMV2(p4, _p4);
+	auto p1 = entToRadar(myEye, ang, poses.at(0), m_drawPos, m_drawSize, scale, false).toImVec();
+	auto p2 = entToRadar(myEye, ang, poses.at(1), m_drawPos, m_drawSize, scale, false).toImVec();
+	auto p3 = entToRadar(myEye, ang, poses.at(2), m_drawPos, m_drawSize, scale, false).toImVec();
+	auto p4 = entToRadar(myEye, ang, poses.at(3), m_drawPos, m_drawSize, scale, false).toImVec();
 
 	imRenderWindow.getDrawList()->AddImageQuad(m_mapTexture, p1, p2, p3, p4);
 }
 
 void Radar::draw()
 {
-	bool& ref = config.getRef<bool>(vars.bRadar);
-	if (!ref)
+	if (!vars::misc->radar->enabled)
 		return;
 
 	if (!game::localPlayer)
@@ -183,17 +171,17 @@ void Radar::draw()
 	if (!interfaces::engine->isInGame())
 		return;
 
-	float size = config.get<float>(vars.fRadarSize);
+	float size = vars::misc->radar->size;
 	ImGui::SetNextWindowSize({ size, size });
-	if (ImGui::Begin(XOR("Radar"), &ref, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize))
+	if (ImGui::Begin(XOR("Radar"), &vars::misc->radar->enabled, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize))
 	{
 		imRenderWindow.addList();
 
-		__TO_IMV2(m_drawSize, imRenderWindow.getRect());
-		__TO_IMV2(m_drawPos, imRenderWindow.getPos());
+		m_drawSize = Vec2{ imRenderWindow.getRect().x, imRenderWindow.getRect().y };
+		m_drawPos = Vec2{ imRenderWindow.getPos().x, imRenderWindow.getPos().y };
 
 		const auto myEye = game::localPlayer->getEyePos();
-		Vector ang = {};
+		Vec3 ang = {};
 		interfaces::engine->getViewAngles(ang);
 
 		auto rect = imRenderWindow.getRect();
@@ -221,9 +209,9 @@ void Radar::draw()
 		// draw small circle where are we
 		imRenderWindow.drawCircleFilled(middleX, middleY, 5.0f, 12, Colors::Green);
 
-		for (int i = 1; i <= interfaces::globalVars->m_maxClients; i++) // uisng cache might be not so much updated each frame, so I am using standard way
+		for(auto [entity, idx, classID] : EntityCache::getCache(EntCacheType::PLAYER))
 		{
-			auto ent = reinterpret_cast<Player_t*>(interfaces::entList->getClientEntity(i));
+			auto ent = reinterpret_cast<Player_t*>(entity);
 
 			if (!ent)
 				continue;
@@ -240,30 +228,34 @@ void Radar::draw()
 			if (!ent->isOtherTeam(game::localPlayer()))
 				continue;
 
-			const auto entRotatedPos = entToRadar(myEye, ang, ent->absOrigin(), Vector2D{}, Vector2D{ imRenderWindow.getWidth(), imRenderWindow.getHeight() }, config.get<float>(vars.fRadarScale), true);
+			const auto entRotatedPos = entToRadar(myEye, ang, ent->absOrigin(), Vec2{}, Vec2{ imRenderWindow.getWidth(), imRenderWindow.getHeight() },
+				vars::misc->radar->scale, true);
 
-			auto entYaw = ent->m_angEyeAngles().y;
+			// or use calcangle, this will be faster though
+			auto entYaw = ent->m_angEyeAngles()[Coord::Y];
 
 			if (entYaw < 0.0f)
 				entYaw = 360.0f + entYaw;
 
-			const auto rotated = 270.0f - entYaw + ang.y;
+			const auto rotated = 270.0f - entYaw + ang[Coord::Y];
 
-			auto dotRad = config.get<float>(vars.fRadarLenght);
+			auto dotRad = vars::misc->radar->length;
 
 			const auto finalX = dotRad * std::cos(math::DEG2RAD(rotated));
 			const auto finalY = dotRad * std::sin(math::DEG2RAD(rotated));
 
-			if (config.get<bool>(vars.bRadarRanges) ? true : !entRotatedPos.isZero())
+			if (vars::misc->radar->ranges ? true : !entRotatedPos.isZero())
 			{
-				auto dotThickness = config.get<float>(vars.fRadarThickness);
+				auto dotThickness = vars::misc->radar->thickness;
 
-				CfgColor colLine = config.get<CfgColor>(vars.cRadarLine);
-				imRenderWindow.drawLine(entRotatedPos.x - 1, entRotatedPos.y - 1, entRotatedPos.x + finalX, entRotatedPos.y + finalY,
-					game::localPlayer->isPossibleToSee(ent, ent->getBonePos(8)) ? colLine.getColor() : colLine.getColor().getColorEditAlpha(0.5f));
-				CfgColor colPlayer = config.get<CfgColor>(vars.cRadarPlayer);
-				imRenderWindow.drawCircleFilled(entRotatedPos.x, entRotatedPos.y, dotThickness, 32,
-					game::localPlayer->isPossibleToSee(ent, ent->getBonePos(8)) ? colPlayer.getColor() : colPlayer.getColor().getColorEditAlpha(0.5f));
+				imRenderWindow.drawLine(entRotatedPos[Coord::X] - 1, entRotatedPos[Coord::Y] - 1, entRotatedPos[Coord::X] + finalX,
+					entRotatedPos[Coord::Y] + finalY, vars::misc->radar->colorLine());
+				
+				imRenderWindow.drawCircleFilled(entRotatedPos[Coord::X], entRotatedPos[Coord::Y], dotThickness, 32,
+					vars::misc->radar->colorPlayer());
+
+				//imRenderWindow.drawTriangleFilled(entRotatedPos[Coord::X], entRotatedPos[Coord::Y], dotThickness,
+				//	dotThickness, rotated, vars::misc->radar->colorPlayer());
 
 			}
 		}
@@ -286,5 +278,5 @@ void RadarSizeHelper::run(MapStruct* map)
 	// although by CCSGO_MapOverview it has 256 still...
 	// so we trick it to load manually on new map
 
-	g_Radar.m_inited = false;
+	g_Radar->m_inited = false;
 }

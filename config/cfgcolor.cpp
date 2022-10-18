@@ -6,29 +6,13 @@
 #include <SDK/CGlobalVars.hpp>
 #include <SDK/interfaces/interfaces.hpp>
 
-CfgColor::CfgColor(const Color& color, bool rainbow, float speed)
-	: m_color{ color }, m_rainbow{ rainbow }, m_speed{ speed }
-{}
+#include "cfgcolor.hpp"
 
-CfgColor::CfgColor(const CfgColor& other)
-{
-	*this = other;
-	refresh();
-}
+#include <cmath>
+#include <numbers>
 
-CfgColor& CfgColor::operator=(const CfgColor& other)
-{
-	this->m_color = other.getColor();
-	this->m_rainbow = other.getRainbow();
-	this->m_speed = other.getSpeed();
-	//this->refresh();
-	return *this;
-}
-CfgColor& CfgColor::operator=(const Color& other)
-{
-	this->m_color = other;
-	return *this;
-}
+#include <SDK/CGlobalVars.hpp>
+#include <SDK/interfaces/interfaces.hpp>
 
 void CfgColor::updateCol(float gameTime, float multiply)
 {

@@ -25,15 +25,10 @@ long __stdcall hooks::present::hooked(IDirect3DDevice9* device, RECT* srcRect, R
 		// style, colors, ini file etc.
 		menu.init();
 
-		console.log(TypeLogs::LOG_INFO, XOR("init for present success"));
+		LOG_INFO(XOR("init for present success"));
 
 		return true;
 	} ();
-
-	IDirect3DVertexDeclaration9* ppdecl;
-	IDirect3DVertexShader9* ppshader;
-	device->GetVertexDeclaration(&ppdecl);
-	device->GetVertexShader(&ppshader);
 
 	static Resource res{ IDB_PNG1, "PNG" };
 
@@ -46,7 +41,6 @@ long __stdcall hooks::present::hooked(IDirect3DDevice9* device, RECT* srcRect, R
 		menu.draw();
 		console.drawLog();
 		const auto imdraw = ImGui::GetBackgroundDrawList();
-		//imRender.drawImage(imdraw, res, 300, 300, 200, 200);
 		imRender.renderPresent(imdraw);
 		background.draw(imdraw);
 		RenderablePresentType::runAll();
@@ -62,9 +56,6 @@ long __stdcall hooks::present::hooked(IDirect3DDevice9* device, RECT* srcRect, R
 		ImGui_ImplDX9_RenderDrawData(ImGui::GetDrawData());
 		device->EndScene();
 	}
-
-	device->SetVertexDeclaration(ppdecl);
-	device->SetVertexShader(ppshader);
 
 	return original(device, srcRect, dstRect, window, region);
 }

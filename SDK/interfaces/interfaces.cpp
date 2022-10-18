@@ -1,5 +1,7 @@
 #include "interfaces.hpp"
 
+#include "../interfaceNode.hpp"
+
 #include <utilities/tools/tools.hpp>
 #include <utilities/tools/wrappers.hpp>
 #include <utilities/console/console.hpp>
@@ -8,35 +10,56 @@
 
 #include <Windows.h>
 #include <d3d9.h>
+#include <string>
+#include <optional>
+
+#define EXPORT(var, hash, _module) \
+	var = ::li::detail::lazy_function<hash, decltype(var)>().in(g_Memory.getModule(_module));
+
+#define EXPORT_LOG(var, hash, _module) \
+	var = ::li::detail::lazy_function<hash, decltype(var)>().in(g_Memory.getModule(_module)); \
+	LOG_INFO(XOR("found {} at addr: 0x{:X}"), #var, reinterpret_cast<uintptr_t>(var));
 
 template <typename T>
-static T* getInterface(const std::string_view moduleName, const std::string_view interfaceName)
+static std::optional<T*> getInterface(const std::string_view moduleName, const std::string_view interfaceName)
 {
 	using fun = void* (*)(const char*, int*);
 	fun capture;
-	LI_EXPORT(capture, reinterpret_cast<fun>, CreateInterface, g_Memory.getModule(moduleName));
+	EXPORT(capture, "CreateInterface"_hash, moduleName);
 
-	if (const auto ret = capture(interfaceName.data(), nullptr); ret != nullptr)
-		return reinterpret_cast<T*>(ret);
-			
-	throw std::runtime_error(FORMAT(XOR("Interface {} was nullptr"), interfaceName));
+	const auto addr = Memory::Address<InterfacesNode*>{ reinterpret_cast<uintptr_t>(capture) };
+	const auto esi = addr.rel(0x5, 0x6).ref(Memory::Dereference::TWICE);
+
+	for (auto el = esi(); el; el = el->m_next)
+	{
+		if (std::string_view{ el->m_name }.starts_with(interfaceName))
+			return static_cast<T*>(el->m_createFn());
+	}
+
+	return std::nullopt;
 }
+
+#undef EXPORT
 
 // capture and log
 // var - var you want to init
 // type - type for template
 // _module - module name from the game, eg: engine.dll
 // _interface - interface' name
-#define CAPNLOG(var, type, _module, _interface) \
-	var = getInterface<type>(_module, XOR(_interface)); \
-	console.log(TypeLogs::LOG_INFO, FORMAT(XOR("found {} at addr: 0x{:X}"), _interface, reinterpret_cast<uintptr_t>(var)));
+#define CAP(var, type, _module, _interface) \
+	if(auto val = getInterface<type>(_module, XOR(_interface)); val.has_value()) \
+		var = val.value(); \
+	else \
+		throw std::runtime_error(FORMAT(XOR("Interface {} was nullptr"), _interface)); \
+	LOG_INFO(XOR("found {} at addr: 0x{:X}"), _interface, reinterpret_cast<uintptr_t>(var));
 
-#define LOG(var) \
-	console.log(TypeLogs::LOG_INFO, FORMAT(XOR("found {} at addr: 0x{:X}"), #var, reinterpret_cast<uintptr_t>(var)));
-
-#define ADDNLOG(var, mem) \
+#define ADD(var, mem) \
 	var = mem; \
-	console.log(TypeLogs::LOG_INFO, FORMAT(XOR("found {} at addr: 0x{:X}"), #var, reinterpret_cast<uintptr_t>(var)));
+	LOG_INFO(XOR("found {} at addr: 0x{:X}"), #var, reinterpret_cast<uintptr_t>(var));
+
+#define FROM_VFUNC(var, expression) \
+	var = expression; \
+	LOG_INFO(XOR("found {} at addr: 0x{:X}"), #var, reinterpret_cast<uintptr_t>(var));
 
 #define ENGINE_DLL					XOR("engine.dll")
 #define CLIENT_DLL					XOR("client.dll")
@@ -54,56 +77,53 @@ static T* getInterface(const std::string_view moduleName, const std::string_view
 	
 bool interfaces::init()
 {
-	CAPNLOG(engine, IVEngineClient, ENGINE_DLL, "VEngineClient014");
-	CAPNLOG(panel, IPanel, VGUI_DLL, "VGUI_Panel009");
-	CAPNLOG(surface, ISurface, VGUIMAT_DLL, "VGUI_Surface031");
-	CAPNLOG(client, IBaseClientDLL, CLIENT_DLL, "VClient018");
-	CAPNLOG(entList, IClientEntityList, CLIENT_DLL, "VClientEntityList003");
-	CAPNLOG(cvar, ICvar, VSTD_DLL, "VEngineCvar007");
-	CAPNLOG(trace, IEngineTrace, ENGINE_DLL, "EngineTraceClient004");
-	CAPNLOG(renderView, IVRenderView, ENGINE_DLL, "VEngineRenderView014");
-	CAPNLOG(matSys, IMaterialSystem, MATERIAL_DLL, "VMaterialSystem080");
-	CAPNLOG(modelInfo, IVModelInfo, ENGINE_DLL, "VModelInfoClient004");
-	CAPNLOG(prediction, IPrediction, CLIENT_DLL, "VClientPrediction001");
-	CAPNLOG(gameMovement, CGameMovement, CLIENT_DLL, "GameMovement001");
-	CAPNLOG(debugOverlay, IVDebugOverlay, ENGINE_DLL, "VDebugOverlay004");
-	CAPNLOG(localize, ILocalize, LOCALIZE_DLL, "Localize_001");
-	CAPNLOG(modelRender, IVModelRender, ENGINE_DLL, "VEngineModel016");
-	CAPNLOG(studioRender, IVStudioRender, STUDIORENDER_DLL, "VStudioRender026");
-	CAPNLOG(eventManager, IGameEventManager, ENGINE_DLL, "GAMEEVENTSMANAGER002");
-	CAPNLOG(efx, IVEfx, ENGINE_DLL, "VEngineEffects001");
-	CAPNLOG(iSystem, InputSystem, INPUTSYSTEM_DLL, "InputSystemVersion001");
-	CAPNLOG(effects, IEffects, CLIENT_DLL, "IEffects001");
-	CAPNLOG(fileSystem, IFileSystem, FILESYS_DLL, "VFileSystem017");
+	CAP(engine, IVEngineClient, ENGINE_DLL, "VEngineClient0");
+	CAP(panel, IPanel, VGUI_DLL, "VGUI_Panel0");
+	CAP(surface, ISurface, VGUIMAT_DLL, "VGUI_Surface0");
+	CAP(client, IBaseClientDLL, CLIENT_DLL, "VClient0");
+	CAP(entList, IClientEntityList, CLIENT_DLL, "VClientEntityList0");
+	CAP(cvar, ICvar, VSTD_DLL, "VEngineCvar0");
+	CAP(trace, IEngineTrace, ENGINE_DLL, "EngineTraceClient0");
+	CAP(renderView, IVRenderView, ENGINE_DLL, "VEngineRenderView0");
+	CAP(matSys, IMaterialSystem, MATERIAL_DLL, "VMaterialSystem0");
+	CAP(modelInfo, IVModelInfo, ENGINE_DLL, "VModelInfoClient0");
+	CAP(prediction, IPrediction, CLIENT_DLL, "VClientPrediction0");
+	CAP(gameMovement, CGameMovement, CLIENT_DLL, "GameMovement0");
+	CAP(debugOverlay, IVDebugOverlay, ENGINE_DLL, "VDebugOverlay0");
+	CAP(localize, ILocalize, LOCALIZE_DLL, "Localize_0");
+	CAP(modelRender, IVModelRender, ENGINE_DLL, "VEngineModel0");
+	CAP(studioRender, IVStudioRender, STUDIORENDER_DLL, "VStudioRender0");
+	CAP(eventManager, IGameEventManager, ENGINE_DLL, "GAMEEVENTSMANAGER002");
+	CAP(efx, IVEfx, ENGINE_DLL, "VEngineEffects0");
+	CAP(iSystem, InputSystem, INPUTSYSTEM_DLL, "InputSystemVersion0");
+	CAP(effects, IEffects, CLIENT_DLL, "IEffects0");
+	CAP(fileSystem, IFileSystem, FILESYS_DLL, "VFileSystem0");
 
-#undef CAPNLOG
+#undef CAP
 
-	LI_EXPORT_CDECL(keyValuesSys, reinterpret_cast<KeyValuesSys * (__cdecl*)()>, KeyValuesSystem, g_Memory.getModule(VSTD_DLL));
-	LOG(keyValuesSys);
-	LI_EXPORT(memAlloc, *reinterpret_cast<IMemAlloc**>, g_pMemAlloc, g_Memory.getModule(TIER_DLL));
-	LOG(memAlloc);
+	EXPORT_LOG(keyValuesSys, "KeyValuesSystem"_hash, VSTD_DLL);
+	EXPORT_LOG(memAlloc, "g_pMemAlloc"_hash, TIER_DLL);
 
-	globalVars = **reinterpret_cast<CGlobalVarsBase***>((*reinterpret_cast<uintptr_t**>(client))[0] + 0x1F);
-	LOG(globalVars);
-	clientMode = **reinterpret_cast<ClientMode***>((*reinterpret_cast<uintptr_t**>(client))[10] + 0x5);
-	LOG(clientMode);
-	input = *reinterpret_cast<Input**>((*reinterpret_cast<uintptr_t**>(client))[16] + 0x1);
-	LOG(input);
+#undef EXPORT_LOG
 
-#undef LOG
+	FROM_VFUNC(globalVars, Memory::Address<CGlobalVarsBase*>{ vfunc::getVFunc(client, 0) }.add(0x1F).ref(Memory::Dereference::TWICE)());
+	FROM_VFUNC(clientMode, Memory::Address<ClientMode*>{ vfunc::getVFunc(client, 10) }.add(0x5).ref(Memory::Dereference::TWICE)());
+	FROM_VFUNC(input, Memory::Address<Input*>{ vfunc::getVFunc(client, 16) }.add(0x1).ref()());
 
-	ADDNLOG(beams, g_Memory.m_beams());
-	ADDNLOG(glowManager, g_Memory.m_glowManager());
-	ADDNLOG(weapon, g_Memory.m_weaponInterface());
-	ADDNLOG(moveHelper, g_Memory.m_moveHelper());
-	ADDNLOG(resource, g_Memory.m_resourceInterface());
-	ADDNLOG(dx9Device, g_Memory.m_dx9Device());
-	ADDNLOG(clientState, g_Memory.m_clientState());
-	ADDNLOG(gameRules, g_Memory.m_gameRules());
-	ADDNLOG(viewRender, g_Memory.m_viewRender());
+#undef FROM_VFUNC
 
-#undef ADDNLOG
+	ADD(beams, g_Memory.m_beams());
+	ADD(glowManager, g_Memory.m_glowManager());
+	ADD(weapon, g_Memory.m_weaponInterface());
+	ADD(moveHelper, g_Memory.m_moveHelper());
+	ADD(resource, g_Memory.m_resourceInterface());
+	ADD(dx9Device, g_Memory.m_dx9Device());
+	ADD(clientState, g_Memory.m_clientState());
+	ADD(gameRules, g_Memory.m_gameRules());
+	ADD(viewRender, g_Memory.m_viewRender());
 
-	console.log(TypeLogs::LOG_INFO, XOR("interfaces success"));
+#undef ADD
+
+	LOG_INFO(XOR("interfaces success"));
 	return true;
 }

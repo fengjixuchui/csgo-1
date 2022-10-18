@@ -9,14 +9,9 @@
 #include <game/game.hpp>
 #include <config/vars.hpp>
 
-void Glow::init()
-{
-
-}
-
 void Glow::run()
 {
-	if (!config.get<bool>(vars.bGlow))
+	if (!vars::visuals->glow->enabled)
 		return;
 
 	if (!game::isAvailable())
@@ -48,7 +43,7 @@ void Glow::run()
 		{
 			if (!ent->isOtherTeam(game::localPlayer()))
 			{
-				glow.set(config.get<CfgColor>(vars.cGlow).getColor());
+				glow.set(vars::visuals->glow->colorPlayer());
 				glow.m_fullBloom = false;
 			}
 			break;

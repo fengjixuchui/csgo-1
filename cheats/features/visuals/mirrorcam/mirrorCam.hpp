@@ -2,45 +2,46 @@
 
 #include <classes/renderableToPresent.hpp>
 #include <classes/renderView.hpp>
-#include <SDK/math/Vector2D.hpp>
+
+#include <SDK/math/Vector.hpp>
 
 class CViewSetup;
 class ITexture;
 struct IDirect3DTexture9;
 class MirrorCamDraw;
 
-class MirrorCam : public RenderViewType
+class MirrorCam : protected RenderViewType
 {
 public:
 	constexpr MirrorCam() :
 		RenderViewType{}
 	{}
 
-	virtual void init();
-	virtual void run(const CViewSetup& view);
+protected:
+	virtual void run(const CViewSetup& view) override;
+	virtual void init() override;
 private:
-	constexpr void setSize(const Vector2D& size) { m_size = size; }
+	constexpr void setSize(const Vec2& size) { m_size = size; }
 	IDirect3DTexture9* getTexture() const;
 
-	Vector2D m_size = { 1.0f, 1.0f };
+	Vec2 m_size = Vec2{ 1.0f, 1.0f };
 	ITexture* m_texture;
 	bool m_inited = false;
 
 	friend MirrorCamDraw;
 };
 
-[[maybe_unused]] inline auto g_MirrorCam = MirrorCam{};
+GLOBAL_FEATURE(MirrorCam);
 
-class MirrorCamDraw : public RenderablePresentType
+class MirrorCamDraw : protected RenderablePresentType
 {
 public:
 	constexpr MirrorCamDraw() :
 		RenderablePresentType{}
 	{}
 
-	virtual void init();
-	virtual void draw();
+protected:
+	virtual void draw() override;
 };
 
-[[maybe_unused]] inline auto g_MirrorCamDraw = MirrorCamDraw{};
-
+GLOBAL_FEATURE(MirrorCamDraw);

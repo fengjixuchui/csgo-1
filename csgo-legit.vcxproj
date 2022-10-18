@@ -64,7 +64,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <SDLCheck>false</SDLCheck>
+      <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
       <PreprocessorDefinitions>NDEBUG;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalOptions>/std:c++latest %(AdditionalOptions)</AdditionalOptions>
@@ -74,7 +74,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <ForcedIncludeFiles>pch.h</ForcedIncludeFiles>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <WholeProgramOptimization>false</WholeProgramOptimization>
@@ -83,6 +83,8 @@
       <IntrinsicFunctions>false</IntrinsicFunctions>
       <FavorSizeOrSpeed>Neither</FavorSizeOrSpeed>
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <ProjectReference>
       <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
@@ -121,22 +123,25 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <StringPooling>true</StringPooling>
-      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
       <FloatingPointModel>Fast</FloatingPointModel>
       <ForcedUsingFiles>
       </ForcedUsingFiles>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
-      <OmitFramePointers>true</OmitFramePointers>
+      <OmitFramePointers>false</OmitFramePointers>
       <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
     </ClCompile>
     <Link>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
       <AdditionalDependencies>DbgHelp.lib;freetype.lib;d3dx9.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <GenerateDebugInformation>false</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -211,12 +216,17 @@
     <ClCompile Include="cheats\features\visuals\world\tone.cpp" />
     <ClCompile Include="cheats\features\visuals\world\weather.cpp" />
     <ClCompile Include="cheats\features\visuals\world\zeus.cpp" />
+    <ClCompile Include="cheats\hooks\addEntity.cpp" />
     <ClCompile Include="cheats\hooks\buildTransformations.cpp" />
     <ClCompile Include="cheats\hooks\drawIndexPrimitive.cpp" />
+    <ClCompile Include="cheats\hooks\eraseEntity.cpp" />
     <ClCompile Include="cheats\hooks\fxBlood.cpp" />
     <ClCompile Include="cheats\hooks\getColorModulation.cpp" />
     <ClCompile Include="cheats\hooks\isDepth.cpp" />
     <ClCompile Include="cheats\hooks\isHltv.cpp" />
+    <ClCompile Include="cheats\hooks\levelInitPostEntity.cpp" />
+    <ClCompile Include="cheats\hooks\levelInitPreEntity.cpp" />
+    <ClCompile Include="cheats\hooks\levelShutdown.cpp" />
     <ClCompile Include="cheats\hooks\renderView.cpp" />
     <ClCompile Include="cheats\hooks\screen2deffect.cpp" />
     <ClCompile Include="cheats\hooks\sendDatagram.cpp" />
@@ -227,6 +237,7 @@
     <ClCompile Include="cheats\menu\x88Menu\x88menu.cpp" />
     <ClCompile Include="config\cfgcolor.cpp" />
     <ClCompile Include="config\cfgWeapon.cpp" />
+    <ClCompile Include="config\jsonExtended.cpp" />
     <ClCompile Include="config\key.cpp" />
     <ClCompile Include="dependencies\discord\src\connection_win.cpp" />
     <ClCompile Include="dependencies\discord\src\discord_register_win.cpp" />
@@ -265,7 +276,7 @@
     <ClCompile Include="cheats\hooks\hooks.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">pch.h</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="cheats\hooks\lokcCursor.cpp" />
+    <ClCompile Include="cheats\hooks\lockCursor.cpp" />
     <ClCompile Include="cheats\hooks\present.cpp" />
     <ClCompile Include="cheats\hooks\overrideView.cpp">
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">pch.h</PrecompiledHeaderFile>
@@ -435,9 +446,11 @@
     <ClInclude Include="cheats\menu\GUI-ImGui\background.hpp" />
     <ClInclude Include="cheats\menu\x88Menu\x88menu.hpp" />
     <ClInclude Include="cheats\menu\x88Menu\x88types.hpp" />
+    <ClInclude Include="config\cfgBeam.hpp" />
     <ClInclude Include="config\cfgcolor.hpp" />
     <ClInclude Include="config\cfgWeapon.hpp" />
     <ClInclude Include="config\enums.hpp" />
+    <ClInclude Include="config\jsonExtended.hpp" />
     <ClInclude Include="config\key.hpp" />
     <ClInclude Include="dependencies\discord\include\discord_register.h" />
     <ClInclude Include="dependencies\discord\include\discord_rpc.h" />
@@ -483,8 +496,11 @@
     <ClInclude Include="dependencies\discord\src\rapidjson\writer.h" />
     <ClInclude Include="dependencies\discord\src\rpc_connection.h" />
     <ClInclude Include="dependencies\discord\src\serialization.h" />
+    <ClInclude Include="dependencies\json_fwd.hpp" />
+    <ClInclude Include="dependencies\magic_enum.hpp" />
     <ClInclude Include="dependencies\stb_image.h" />
     <ClInclude Include="gamememory\memory.hpp" />
+    <ClInclude Include="gamememory\sigs.hpp" />
     <ClInclude Include="resources\resource.h" />
     <ClInclude Include="SDK\CClientEffectRegistration.hpp" />
     <ClInclude Include="SDK\CEffectData.hpp" />
@@ -500,6 +516,7 @@
     <ClInclude Include="SDK\IClientState.hpp" />
     <ClInclude Include="SDK\IMatRenderContext.hpp" />
     <ClInclude Include="SDK\IMemAlloc.hpp" />
+    <ClInclude Include="SDK\interfaceNode.hpp" />
     <ClInclude Include="SDK\interfaces\interfaces.hpp" />
     <ClInclude Include="SDK\ITexture.hpp" />
     <ClInclude Include="SDK\IViewRender.hpp" />
@@ -508,9 +525,9 @@
     <ClInclude Include="SDK\MapStruct.hpp" />
     <ClInclude Include="SDK\math\AABB.hpp" />
     <ClInclude Include="SDK\math\matrix.hpp" />
-    <ClInclude Include="SDK\math\Vec.hpp" />
     <ClInclude Include="SDK\math\Vector.hpp" />
-    <ClInclude Include="SDK\math\Vector2D.hpp" />
+    <ClInclude Include="SDK\math\VectorAligned.hpp" />
+    <ClInclude Include="SDK\varMapping.hpp" />
     <ClInclude Include="setup\SEHcatch.hpp" />
     <ClInclude Include="cheats\features\visuals\chams\chams.hpp" />
     <ClInclude Include="cheats\features\visuals\player\player.hpp" />
@@ -723,6 +740,10 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resources\csgo-legit.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="cheats\classes\README.md" />
+    <None Include="dependencies\README.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

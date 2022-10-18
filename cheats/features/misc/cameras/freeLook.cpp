@@ -6,17 +6,12 @@
 #include <SDK/interfaces/interfaces.hpp>
 #include <config/vars.hpp>
 
-void FreeLook::init()
-{
-
-}
-
 void FreeLook::run(CUserCmd* cmd)
 {
-	if (!config.get<bool>(vars.bFreeLook))
+	if (!vars::misc->freeLook->enabled)
 		return;
 
-	if (!config.get<Key>(vars.kFreeLook).isEnabled())
+	if (!vars::keys->freeLook.isEnabled())
 	{
 		m_lastAngle = cmd->m_viewangles;
 		m_lastAngleLook = {};
@@ -33,24 +28,19 @@ void FreeLook::run(CUserCmd* cmd)
 	}
 }
 
-void FreeLookViewer::init()
-{
-
-}
-
 void FreeLookViewer::run(CViewSetup* view)
 {
-	if (!config.get<bool>(vars.bFreeLook))
+	if (!vars::misc->freeLook->enabled)
 		return;
 
-	if (config.get<Key>(vars.kFreeLook).isEnabled())
+	if (vars::keys->freeLook.isEnabled())
 	{
-		const auto look = g_FreeLook.m_lastAngleLook;
+		const auto look = g_FreeLook->m_lastAngleLook;
 
 		if (look.isZero())
 			return;
 
-		view->m_angles.x = look.x;
-		view->m_angles.y = look.y;
+		view->m_angles[0] = look[0];
+		view->m_angles[1] = look[1];
 	}
 }

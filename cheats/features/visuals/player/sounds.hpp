@@ -10,25 +10,27 @@ class IGameEvent;
 class Entity_t;
 class Player_t;
 
-class SoundDraw : public OnlyInitType
+class SoundDraw : protected OnlyInitType
 {
 public:
 	SoundDraw() :
 		OnlyInitType{}
 	{}
 
-	virtual void init();
 	void draw();
-	void findBest(Entity_t* ent);
+	void findBest(Player_t* ent);
+protected:
+	virtual void init() override;
 private:
 	struct StepData_t
 	{
 		StepData_t() = default;
-		StepData_t(Player_t* player, const Vector& pos, float expire)
+		constexpr StepData_t(Player_t* player, const Vec3& pos, float expire)
 			: m_player{ player }, m_pos{ pos }, m_expire{ expire }
 		{}
+
 		Player_t* m_player;
-		Vector m_pos;
+		Vec3 m_pos;
 		float m_expire;
 		float m_maxPixels;
 		float m_timeToPrint;
@@ -40,4 +42,4 @@ private:
 	StepData_t m_bestStep;
 };
 
-[[maybe_unused]] inline auto g_SoundDraw = SoundDraw{};
+GLOBAL_FEATURE(SoundDraw);

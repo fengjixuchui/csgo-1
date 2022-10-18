@@ -1,248 +1,336 @@
 #pragma once
 
-#include "Vector2D.hpp"
-
+#include <array>
+#include <type_traits>
+#include <ranges>
 #include <cmath>
 #include <algorithm>
-#include <compare>
 
-struct Vector
+#include <utilities/tools/wrappers.hpp>
+#include <dependencies/ImGui/imgui.h>
+
+enum class Coord { X, Y, Z };
+
+#define ASSERT_VEC3 static_assert(SIZE == 3, "Use for only v3");
+
+template<typename T, size_t SIZE>
+class Vector
 {
+protected:
+	std::array<T, SIZE> m_arr{};
 public:
 	constexpr Vector()
-		: x{ 0.0f }, y{ 0.0f }, z{ 0.0f }
+	{
+		for (auto& el : m_arr)
+			el = static_cast<T>(0);
+	}
+
+	template<typename... Args_t>
+	explicit constexpr Vector(const Args_t&... args)
+		: m_arr{ args... }
+	{
+		static_assert(sizeof...(Args_t) == SIZE, "packed args mismatch");
+	}
+
+	explicit constexpr Vector(const std::array<T, SIZE>& arr)
+		: m_arr{ arr }
 	{}
-	constexpr Vector(const float x, const float y, const float z)
-		: x{ x }, y{ y }, z{ z }
-	{}
-	constexpr Vector(const float* arr)
-		: x{ arr[0] }, y{ arr[1] }, z{ arr[2] }
-	{}
-	constexpr Vector(float* arr)
-		: x{ arr[0] }, y{ arr[1] }, z{ arr[2] }
-	{}
 
-	inline static constexpr float MAX_ARG = 32767.0f;
-
-	constexpr void clamp()
+	explicit constexpr Vector(const T* arr)
 	{
-		x = std::clamp(x, -89.0f, 89.0f);
-		y = std::clamp(std::remainder(y, 360.0f), -180.0f, 180.0f);
-		z = std::clamp(z, -50.0f, 50.0f);
+		for (auto i : std::views::iota(0U, SIZE))
+			m_arr[i] = arr[i];
 	}
 
-	[[nodiscard]] bool isValid() const
+	constexpr static T MAX_ARG = static_cast<T>(0x7FFF);
+
+	[[nodiscard]] constexpr auto get() const
 	{
-		return std::isfinite(x) && std::isfinite(y) && std::isfinite(z);
+		return *this;
 	}
 
-	[[nodiscard]] float length2D() const
+	[[nodiscard]] constexpr auto begin()
 	{
-		return std::sqrt(x * x + y * y);
+		return m_arr.begin();
 	}
 
-	[[nodiscard]] constexpr float length2DSqrt() const
+	[[nodiscard]] const constexpr auto begin() const
 	{
-		return (x * x + y * y);
+		return m_arr.cbegin();
 	}
 
-	[[nodiscard]] float length() const
+	[[nodiscard]] constexpr auto end()
 	{
-		return std::sqrt(x * x + y * y + z * z);
+		return m_arr.end();
 	}
 
-	[[nodiscard]] float distToMeters(const Vector& vOther) const
+	[[nodiscard]] const constexpr auto end() const
 	{
-		return distTo(vOther) * 0.0254f;
+		return m_arr.cend();
 	}
 
-	[[nodiscard]] constexpr float lengthSqrt() const
+	[[nodiscard]] constexpr size_t size() const
 	{
-		return (x * x + y * y + z * z);
+		return SIZE;
 	}
 
 	[[nodiscard]] constexpr bool isZero() const
 	{
-		return x == 0.0f && y == 0.0f && z == 0.0f;
+		bool res = std::all_of(m_arr.cbegin(), m_arr.cend(),
+			[zero = static_cast<T>(0)](T el)
+		{
+			return el == zero;
+		});
+
+		return res;
 	}
 
-	[[nodiscard]] float distTo(const Vector& vOther) const
+	[[nodiscard]] constexpr bool isValid() const
 	{
-		return (*this - vOther).length();
+		bool res = std::all_of(m_arr.cbegin(), m_arr.cend(),
+			[](T el)
+			{
+				return std::isfinite(el);
+			});
+
+		return res;
 	}
 
-	[[nodiscard]] constexpr Vector2D toVec2D() const
+	constexpr auto& clamp()
 	{
-		return Vector2D{ x, y };
-	}
+		ASSERT_VEC3;
 
-	Vector& normalize()
-	{
-		x = std::isfinite(x) ? std::remainder(x, 360.0f) : 0.0f;
-		y = std::isfinite(y) ? std::remainder(y, 360.0f) : 0.0f;
-		z = 0.0f;
+		m_arr[0] = std::clamp(m_arr[0], (T)-89, (T)89);
+		m_arr[1] = std::clamp(std::remainder(m_arr[1], (T)360), (T)-180, (T)180);
+		m_arr[2] = std::clamp(m_arr[2], (T)-50, (T)50);
+
 		return *this;
 	}
 
-	[[nodiscard]] Vector normalized() const
+	[[nodiscard]] T length() const
 	{
-		Vector vec = *this;
-		float len = vec.length();
+		return std::sqrt(this->dotFields());
+	}
 
-		if (len)
-			vec /= len;
-		else
-			vec = {};
+	[[nodiscard]] constexpr T lengthSqrt() const
+	{
+		return this->dotFields();
+	}
+
+	[[nodiscard]] constexpr auto toVecPrev() const
+	{
+		return Vector<T, SIZE - 1U>{ getPack<SIZE - 1U>() };
+	}
+
+	constexpr const auto operator[](size_t i) const
+	{
+		return this->m_arr[i];
+	}
+
+	constexpr auto& operator[](size_t idx)
+	{
+		return this->m_arr[idx];
+	}
+
+	constexpr const auto operator[](Coord coord) const
+	{
+		return this->m_arr[E2T(coord)];
+	}
+
+	constexpr auto& operator[](Coord coord)
+	{
+		return this->m_arr[E2T(coord)];
+	}
+
+	constexpr auto& operator+=(const Vector& vec)
+	{
+		for (auto i : std::views::iota(0U, SIZE))
+			m_arr[i] += vec[i];
+
+		return *this;
+	}
+
+	constexpr auto& operator+=(T val)
+	{
+		for (auto& el : m_arr)
+			el += val;
+
+		return *this;
+	}
+
+	constexpr auto& operator-=(const Vector& vec)
+	{
+		for (auto i : std::views::iota(0U, SIZE))
+			m_arr[i] -= vec[i];
+
+		return *this;
+	}
+
+	constexpr auto& operator-=(T val)
+	{
+		for (auto& el : m_arr)
+			el -= val;
+
+		return *this;
+	}
+
+	constexpr auto& operator*=(const Vector& vec)
+	{
+		for (auto i : std::views::iota(0U, SIZE))
+			m_arr[i] *= vec[i];
+
+		return *this;
+	}
+
+	constexpr auto& operator*=(T val)
+	{
+		for (auto& el : m_arr)
+			el *= val;
+
+		return *this;
+	}
+
+	constexpr auto& operator/=(const Vector& vec)
+	{
+		for (auto i : std::views::iota(0U, SIZE))
+			m_arr[i] /= vec[i];
+
+		return *this;
+	}
+
+	constexpr auto& operator/=(T val)
+	{
+		for (auto i : std::views::iota(0U, SIZE))
+			m_arr[i] /= val;
+
+		return *this;
+	}
+
+	constexpr auto operator+(const Vector& vec) const
+	{
+		Vector res = {};
+		for (auto i : std::views::iota(0U, SIZE))
+			res[i] = this->m_arr[i] + vec[i];
+
+		return res;
+	}
+
+	constexpr auto operator-(const Vector& vec) const
+	{
+		Vector res = {};
+		for (auto i : std::views::iota(0U, SIZE))
+			res[i] = this->m_arr[i] - vec[i];
+
+		return res;
+	}
+
+	constexpr auto operator*(const Vector& vec) const
+	{
+		Vector res = {};
+		for (auto i : std::views::iota(0U, SIZE))
+			res[i] = this->m_arr[i] * vec[i];
+
+		return res;
+	}
+
+	constexpr auto operator/(const Vector& vec) const
+	{
+		Vector res = {};
+		for (auto i : std::views::iota(0U, SIZE))
+			res[i] = this->m_arr[i] / vec[i];
+
+		return res;
+	}
+
+	constexpr auto operator*(T val) const
+	{
+		Vector res = {};
+		for (auto i : std::views::iota(0U, SIZE))
+			res[i] = this->m_arr[i] * val;
+
+		return res;
+	}
+
+	constexpr auto operator/(T val) const
+	{
+		Vector res = {};
+		for (auto i : std::views::iota(0U, SIZE))
+			res[i] = this->m_arr[i] / val;
+
+		return res;
+	}
+
+	constexpr auto& normalize()
+	{
+		ASSERT_VEC3;
+
+		m_arr[0] = std::isfinite(m_arr[0]) ? (T)std::remainder(m_arr[0], (T)360) : (T)0;
+		m_arr[1] = std::isfinite(m_arr[1]) ? (T)std::remainder(m_arr[1], (T)360) : (T)0;
+		m_arr[2] = (T)0;
+
+		return *this;
+	}
+
+	[[nodiscard]] constexpr auto normalized() const
+	{
+		ASSERT_VEC3;
+
+		Vector vec = this->get();
+		vec.normalize();
 
 		return vec;
 	}
 
-	[[nodiscard]] constexpr float dot(const Vector& v) const
+	[[nodiscard]] constexpr T dot(const Vector& vec) const
 	{
-		return (x * v.x + y * v.y + z * v.z);
+		T res = {};
+		for (auto i : std::views::iota(0U, SIZE))
+			res += m_arr[i] * vec[i];
+
+		return res;
 	}
 
-	constexpr float& operator[](int i)
+	[[nodiscard]] T distTo(const Vector& vec) const
 	{
-		return ((float*)this)[i];
+		return Vector{ *this - vec }.length();
 	}
 
-	constexpr const float& operator[](int i) const
+	[[nodiscard]] T distToMeters(const Vector& vec) const
 	{
-		return ((float*)this)[i];
+		return distTo(vec) * (T)0.0254f;
 	}
 
-	constexpr bool operator==(const Vector& src) const
+	[[nodiscard]] constexpr ImVec2 toImVec() const
 	{
-		return (src.x == x) && (src.y == y) && (src.z == z);
+		return ImVec2{ m_arr[0], m_arr[1] };
+	}
+private:
+	[[nodiscard]] constexpr T dotFields(size_t times = SIZE) const
+	{
+		T temp = static_cast<T>(0);
+		for (auto i : std::views::iota(0U, times))
+			temp += m_arr[i] * m_arr[i];
+
+		return temp;
 	}
 
-	constexpr bool operator!=(const Vector& src) const
+	template<size_t SIZ = SIZE, typename TT = T>
+	[[nodiscard]] constexpr std::array<TT, SIZ> getPack() const
 	{
-		return (src.x != x) || (src.y != y) || (src.z != z);
+		std::array<TT, SIZ> arr = {};
+		for (auto i : std::views::iota(0U, SIZ))
+			arr[i] = (TT)m_arr[i];
+
+		return arr;
 	}
+public:
 
-	constexpr auto operator<=>(const Vector&) const = default;
-
-	constexpr Vector& operator=(const Vector& v)
-	{
-		x = v.x;
-		y = v.y;
-		z = v.z;
-		return *this;
-	}
-
-	constexpr Vector& operator+=(const Vector& v)
-	{
-		x += v.x; y += v.y; z += v.z;
-		return *this;
-	}
-
-	constexpr Vector& operator-=(const Vector& v)
-	{
-		x -= v.x; y -= v.y; z -= v.z;
-		return *this;
-	}
-
-	constexpr Vector& operator*=(float fl)
-	{
-		x *= fl;
-		y *= fl;
-		z *= fl;
-		return *this;
-	}
-
-	constexpr Vector& operator*=(const Vector& v)
-	{
-		x *= v.x;
-		y *= v.y;
-		z *= v.z;
-		return *this;
-	}
-
-	constexpr Vector& operator/=(const Vector& v)
-	{
-		x /= v.x;
-		y /= v.y;
-		z /= v.z;
-		return *this;
-	}
-
-	constexpr Vector& operator+=(float fl)
-	{
-		x += fl;
-		y += fl;
-		z += fl;
-		return *this;
-	}
-
-	constexpr Vector& operator/=(float fl)
-	{
-		x /= fl;
-		y /= fl;
-		z /= fl;
-		return *this;
-	}
-
-	constexpr Vector& operator-=(float fl)
-	{
-		x -= fl;
-		y -= fl;
-		z -= fl;
-		return *this;
-	}
-
-	constexpr Vector operator+(const Vector& v) const
-	{
-		return Vector{ x + v.x, y + v.y, z + v.z };
-	}
-
-	constexpr Vector operator-(const Vector& v) const
-	{
-		return Vector{ x - v.x, y - v.y, z - v.z };
-	}
-
-	constexpr Vector operator*(const Vector& v) const
-	{
-		return Vector{ x * v.x, y * v.y, z * v.z };
-	}
-
-	constexpr Vector operator/(const Vector& v) const
-	{
-		return Vector{ x / v.x, y / v.y, z / v.z };
-	}
-
-	constexpr Vector operator*(float fl) const
-	{
-		return Vector{ x * fl, y * fl, z * fl };
-	}
-
-	constexpr Vector operator/(float fl) const
-	{
-		return Vector{ x / fl, y / fl, z / fl };
-	}
-
-	float x, y, z;
+	static_assert(std::is_same_v<T, float> || std::is_same_v<T, int>, "Possible types are only: float, int");
+	static_assert(SIZE >= 2 && SIZE <=4, "Sizes mismatch");
 };
 
-class __declspec(align(16)) VectorAligned : public Vector
-{
-public:
-	VectorAligned() = default;
+using Vec2 = Vector<float, 2U>;
+using Vec3 = Vector<float, 3U>;
+using Vec4 = Vector<float, 4U>;
 
-	constexpr VectorAligned(const Vector& v)
-		: Vector{ v }, w{ 0.0f }
-	{}
-
-	constexpr VectorAligned& operator=(const Vector& v)
-	{
-		x = v.x;
-		y = v.y;
-		z = v.z;
-		w = 0.0f;
-		return *this;
-	}
-
-public:
-	float w;
-};
+#undef ASSERT_VEC3

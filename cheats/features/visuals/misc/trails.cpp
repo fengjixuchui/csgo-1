@@ -11,21 +11,16 @@
 #include <utilities/tools/tools.hpp>
 #include <utilities/tools/wrappers.hpp>
 
-void Trails::init()
-{
-
-}
-
 void Trails::draw()
 {
-	static Vector end;
+	static Vec3 end;
 
 	if (!game::isAvailable())
 		return;
 
-	int type = config.get<int>(vars.iRunMovementTrail);
+	int type = vars::misc->trail->mode;
 
-	if (!config.get<bool>(vars.bRunMovementTrail))
+	if (!vars::misc->trail->enabled)
 		return;
 
 	if (type != E2T(MovementTrail::BEAM))
@@ -34,7 +29,7 @@ void Trails::draw()
 		end = game::localPlayer->m_vecOrigin();
 	}
 
-	CfgColor color = config.get<CfgColor>(vars.cMovementTrail);
+	Color color = vars::misc->trail->color();
 
 	switch (type)
 	{
@@ -43,7 +38,7 @@ void Trails::draw()
 		if (!game::localPlayer->isMoving()) // do not add beams on not moving
 			return;
 
-		const Vector start = game::localPlayer->m_vecOrigin();
+		const Vec3 start = game::localPlayer->m_vecOrigin();
 
 		BeamInfo_t info = {};
 
@@ -54,16 +49,16 @@ void Trails::draw()
 		info.m_vecEnd = end;
 		info.m_haloIndex = -1;
 		info.m_haloScale = 0.0f;
-		info.m_life = config.get<float>(vars.fMovementLife);
+		info.m_life = vars::misc->trail->time;
 		info.m_width = 5.0f;
 		info.m_endWidth = 5.0f;
 		info.m_fadeLength = 0.0f;
 		info.m_amplitude = 2.0;
 		info.m_brightness = 255.0f;
-		info.m_red = color.getColor().rMultiplied();
-		info.m_green = color.getColor().gMultiplied();
-		info.m_blue = color.getColor().bMultiplied();
-		info.m_speed = config.get<float>(vars.fMovementBeamSpeed);
+		info.m_red = color.rMultiplied();
+		info.m_green = color.gMultiplied();
+		info.m_blue = color.bMultiplied();
+		info.m_speed = vars::misc->trail->beamSpeed;
 		info.m_startFrame = 0;
 		info.m_frameRate = 0.0f;
 		info.m_segments = 2;
@@ -81,9 +76,9 @@ void Trails::draw()
 		float curtime = interfaces::globalVars->m_curtime;
 
 		if (game::localPlayer->isMoving())
-			m_trails.push_back(Trail_t{ game::localPlayer->m_vecOrigin(), curtime + config.get<float>(vars.fMovementLife), color.getColor() });
+			m_trails.push_back(Trail_t{ game::localPlayer->m_vecOrigin(), curtime + vars::misc->trail->time, color });
 
-		Vector last = {};
+		Vec3 last = {};
 		if (!m_trails.empty())
 			last = m_trails.front().m_pos;
 

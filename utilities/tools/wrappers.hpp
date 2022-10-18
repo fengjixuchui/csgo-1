@@ -2,7 +2,6 @@
 
 #include <type_traits>
 #include <string>
-#include <locale>
 #include <format>
 
 template<typename T>
@@ -11,14 +10,24 @@ template<typename T>
     return static_cast<std::underlying_type_t<T>>(en);
 }
 
-[[nodiscard]] inline constexpr std::string operator"" _u8str(const char8_t* str, size_t s)
+[[nodiscard]] inline constexpr auto hash(const std::string_view str)
+{
+    return li::detail::khash(str.data());
+}
+
+[[nodiscard]] inline constexpr auto operator"" _u8str(const char8_t* str, size_t s)
 {
     return std::string{ str, str + s };
+}
+
+[[nodiscard]] inline constexpr auto operator"" _hash(const char* str, size_t s)
+{
+    return hash(str);
 }
 
 // format string at runtime
 template<typename... Args_t>
 [[nodiscard]] inline constexpr std::string FORMAT(const std::string_view fmt, Args_t&&... args)
 {
-    return std::vformat(std::locale(), fmt, std::make_format_args(args...));
+    return std::vformat(fmt, std::make_format_args(args...));
 }

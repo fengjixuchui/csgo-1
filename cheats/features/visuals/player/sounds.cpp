@@ -17,20 +17,20 @@
 
 void SoundDraw::init()
 {
-	g_Events.add(XOR("player_footstep"), std::bind(&SoundDraw::pushSteps, this, std::placeholders::_1));
+	g_Events->add(XOR("player_footstep"), std::bind(&SoundDraw::pushSteps, this, std::placeholders::_1));
 }
 
-void SoundDraw::findBest(Entity_t* ent)
+void SoundDraw::findBest(Player_t* ent)
 {
-	if (!config.get<bool>(vars.bSoundEsp))
+	if (!vars::visuals->sound->enabled)
 		return;
 
 	int index = ent->getIndex();
 
 	float x = globals::screenX / 2.0f;
 	float y = globals::screenY / 2.0f;
-	float maxDist = config.get<float>(vars.fStepMaxDist);
-	float maxDistLine = config.get<float>(vars.fStepMaxLineDist);
+	float maxDist = vars::visuals->sound->maxDist;
+	float maxDistLine = vars::visuals->sound->maxDistLine;
 
 	for (size_t i = 0; const auto & el : m_steps.at(index))
 	{
@@ -42,7 +42,7 @@ void SoundDraw::findBest(Entity_t* ent)
 			continue;
 		}
 
-		Vector2D elPos;
+		ImVec2 elPos;
 		if (!imRender.worldToScreen(el.m_pos, elPos))
 			continue;
 
@@ -64,7 +64,7 @@ void SoundDraw::findBest(Entity_t* ent)
 
 		float rad = scaledFont(50.0f, 3.0f, 8.0f);
 		imRender.drawCircleFilled(elPos.x, elPos.y, rad, 32,
-			config.get<CfgColor>(vars.cSoundEsp).getColor().getColorEditAlpha(alpha));
+			vars::visuals->sound->color().getColorEditAlpha(alpha));
 
 		float distFromMiddle = std::round(std::sqrt((elPos.x - x) * (elPos.x - x) + (elPos.y - y) * (elPos.y - y)));
 
@@ -92,7 +92,7 @@ void SoundDraw::draw()
 
 	if (m_bestStep.m_player)
 	{
-		if (Vector2D pos; imRender.worldToScreen(m_bestStep.m_pos, pos))
+		if (ImVec2 pos; imRender.worldToScreen(m_bestStep.m_pos, pos))
 		{
 			std::string_view place = m_bestStep.m_player->m_szLastPlaceName();
 			if (place.empty())
@@ -111,8 +111,8 @@ void SoundDraw::draw()
 
 			imRender.text(x, y, ImFonts::tahoma14, timeText, false, Colors::White);
 			imRender.text(x, y - fontSize, ImFonts::tahoma14, nameText, false, Colors::White);
-			imRender.drawLine(x, y, x + textSize, y, config.get<CfgColor>(vars.cStepLine).getColor());
-			imRender.drawLine(x + textSize, y, pos.x, pos.y, config.get<CfgColor>(vars.cStepLine).getColor());
+			imRender.drawLine(x, y, x + textSize, y, vars::visuals->sound->colorLine());
+			imRender.drawLine(x + textSize, y, pos.x, pos.y, vars::visuals->sound->colorLine());
 		}
 
 		m_bestStep.m_player = nullptr;
@@ -121,7 +121,7 @@ void SoundDraw::draw()
 
 void SoundDraw::pushSteps(IGameEvent* event)
 {
-	if (!config.get<bool>(vars.bSoundEsp))
+	if (!vars::visuals->sound->enabled)
 		return;
 
 	auto who = reinterpret_cast<Player_t*>(interfaces::entList->getClientEntity(interfaces::engine->getPlayerID(event->getInt(XOR("userid")))));
@@ -134,6 +134,6 @@ void SoundDraw::pushSteps(IGameEvent* event)
 	if (who->isDormant())
 		return;
 
-	StepData_t step{ who, who->absOrigin(), interfaces::globalVars->m_curtime + config.get<float>(vars.fStepTime) };
+	StepData_t step{ who, who->absOrigin(), interfaces::globalVars->m_curtime + vars::visuals->sound->time };
 	m_steps.at(step.m_player->getIndex()).push_back(step);
 }

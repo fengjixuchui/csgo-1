@@ -20,28 +20,28 @@
 
 void MirrorCam::init()
 {
-	//interfaces::matSys->forceBeginRenderTargetAllocation();
+	interfaces::matSys->forceBeginRenderTargetAllocation();
 	m_texture = interfaces::matSys->createFullFrameRenderTarget(XOR("mirrorCam"));
-	//interfaces::matSys->forceEndRenderTargetAllocation();
+	interfaces::matSys->forceEndRenderTargetAllocation();
 
 	m_inited = true;
 
-	console.log(TypeLogs::LOG_INFO, XOR("Inited mirrorcam texture!"));
+	LOG_INFO(XOR("Inited mirrorcam texture!"));
 }
 
 void MirrorCam::run(const CViewSetup& view)
 {
 	// this might eat some FPS, if enabled
-	if (!config.get<bool>(vars.bMirrorCam))
+	if (!vars::misc->mirrorCam->enabled)
 		return;
 
 	CViewSetup v = std::move(view);
 
-	v.m_angles.y = v.m_angles.y + 180.0f; // back
+	v.m_angles[Coord::Y] = v.m_angles[Coord::Y] + 180.0f; // back
 	v.x = v.xOld = 0;
 	v.y = v.yOld = 0;
-	v.m_width = v.m_widthOld = static_cast<int>(m_size.x);
-	v.m_height = v.m_heightOld = static_cast<int>(m_size.y);
+	v.m_width = v.m_widthOld = static_cast<int>(m_size[Coord::X]);
+	v.m_height = v.m_heightOld = static_cast<int>(m_size[Coord::Y]);
 	v.m_aspectRatio = static_cast<float>(v.m_width / v.m_height);
 	v.m_nearZ = v.m_nearViewModelZ = 7.0f;
 	v.m_fov = 50.0f;
@@ -61,25 +61,20 @@ IDirect3DTexture9* MirrorCam::getTexture() const
 	return m_texture->m_handle[0]->m_texture;
 }
 
-void MirrorCamDraw::init()
-{
-
-}
-
 void MirrorCamDraw::draw()
 {
-	if (!g_MirrorCam.m_inited)
+	if (!g_MirrorCam->m_inited)
 		return;
 
 	if (!game::isAvailable())
 		return;
 
-	if (!config.get<bool>(vars.bMirrorCam))
+	if (!vars::misc->mirrorCam->enabled)
 		return;
 
-	if (config.get<bool>(vars.bMirrorCamOnKey))
+	if (vars::misc->mirrorCam->onKey)
 	{
-		if (!config.get<Key>(vars.kMirrorCam).isEnabled())
+		if (!vars::keys->mirrorCam.isEnabled())
 			return;
 	}
 
@@ -95,11 +90,11 @@ void MirrorCamDraw::draw()
 
 		if (auto size = ImGui::GetContentRegionAvail(); size.x != 0.0f && size.y != 0.0f) // / 0
 		{
-			float xRatio = static_cast<float>(g_MirrorCam.m_texture->getActualWidth()) / size.x;
-			float yRatio = static_cast<float>(g_MirrorCam.m_texture->getActualHeight()) / size.y;
+			float xRatio = static_cast<float>(g_MirrorCam->m_texture->getActualWidth()) / size.x;
+			float yRatio = static_cast<float>(g_MirrorCam->m_texture->getActualHeight()) / size.y;
 
-			g_MirrorCam.setSize({ size.x * xRatio, size.y * yRatio });
-			ImGui::Image(g_MirrorCam.getTexture(), size);
+			g_MirrorCam->setSize(Vec2{ size.x * xRatio, size.y * yRatio });
+			ImGui::Image(g_MirrorCam->getTexture(), size);
 		}
 
 		ImGui::End();

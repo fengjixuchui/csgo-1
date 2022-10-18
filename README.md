@@ -125,6 +125,11 @@ This is a trianing software. No further actions taken by people are heeded.
 * 1.5.9 - Memory cleanup, static offsets were always a problem due to short lag while gathering the offset. Now it run once at the start + adding it should be very easy. Handled exports, mostly needed for sig scan and CreateInterface.
 * 1.6.0 - Include paths.
 * 1.6.1 - Include paths v2.
+* 1.6.2 - Source cleanup, generic vector & matrix.
+* 1.6.3 - Once again better generic vector. Config is now stored in nice-looking json + accessing values is not painful. Cleanup is still needed. Better smoothing included in aimbot, still needs some extensions.  
+* 1.6.4 - Config fix again, added magic_enum to not repat same names in the selections namespace.
+* 1.6.5 - Bit of clean up with memory, interfaces and valid entity cache that will work for any frame. And maybe crash fixes?
+* 1.6.6 - Cleanup, base classes for features are now more abstract. Fixed crash due to wrong allocation for vector. Rebuild hook structs to be defined with macros.
 </details>
 
 # Dependencies
@@ -133,6 +138,9 @@ This is a trianing software. No further actions taken by people are heeded.
 * [xorstr](https://github.com/JustasMasiulis/xorstr)
 * [json](https://github.com/nlohmann/json)
 * [ImGui](https://github.com/ocornut/imgui)
+* [freetype](https://gitlab.freedesktop.org/freetype/freetype)
+* [stb_image](https://github.com/nothings/stb)
+* [magic_enum](https://github.com/Neargye/magic_enum)
 
 # People who helped
 * [KittenPopo](https://github.com/KittenPopo) - answering questions I have been confused how something works and for cs18 leak which made reversing even easier.

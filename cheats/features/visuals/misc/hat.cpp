@@ -10,14 +10,9 @@
 #include <utilities/math/math.hpp>
 #include <utilities/renderer/renderer.hpp>
 
-void Hat::init()
-{
-
-}
-
 void Hat::draw()
 {
-	if (!config.get<bool>(vars.bHat))
+	if (!vars::misc->hat->enabled)
 		return;
 
 	if (!game::isAvailable())
@@ -30,18 +25,19 @@ void Hat::draw()
 
 	// config.get<> enjoyer
 
-	if (config.get<bool>(vars.bHatRainbow))
+	if (vars::misc->hat->rainbow)
 	{
-		drawConeEditedRainbow(pos, config.get<float>(vars.fHatRadius), 86, config.get<float>(vars.fHatSize), config.get<float>(vars.fHatSpeed), config.get<int>(vars.iHatTriangleAlpha), config.get<int>(vars.iHatLinesAlpha));
+		drawConeEditedRainbow(pos, vars::misc->hat->radius, 86, vars::misc->hat->size,
+			vars::misc->hat->rainbowSpeed, vars::misc->hat->rainbowAlpha, vars::misc->hat->rainbowLinesAlpha);
 	}
 	else
 	{
-		imRender.drawCone(pos, config.get<float>(vars.fHatRadius), 86, config.get<float>(vars.fHatSize),
-			config.get<CfgColor>(vars.cHatTriangle).getColor(), config.get<CfgColor>(vars.cHatLine).getColor(), true, 2.0f);
+		imRender.drawCone(pos, vars::misc->hat->radius, 86, vars::misc->hat->size,
+			vars::misc->hat->colorTriangle(), vars::misc->hat->colorLine(), true, 2.0f);
 	}
 }
 
-void Hat::drawConeEditedRainbow(const Vector& pos, const float radius, const int points, const float size,
+void Hat::drawConeEditedRainbow(const Vec3& pos, const float radius, const int points, const float size,
 	const float speed, const int trianglesAlpha, const int linesAlpha, const float thickness)
 {
 	ImVec2 orignalW2S = {};
@@ -51,13 +47,15 @@ void Hat::drawConeEditedRainbow(const Vector& pos, const float radius, const int
 	float step = math::PI * 2.0f / points;
 	for (float angle = 0.0f; angle < (math::PI * 2.0f); angle += step)
 	{
-		Vector startWorld = { radius * std::cos(angle) + pos.x, radius * std::sin(angle) + pos.y, pos.z };
-		Vector endWorld = { radius * std::cos(angle + step) + pos.x, radius * std::sin(angle + step) + pos.y, pos.z };
+		Vec3 startWorld = Vec3{ radius * std::cos(angle) + pos[Coord::X], radius * std::sin(angle) + pos[Coord::Y], pos[Coord::Z] };
+		Vec3 endWorld = Vec3{ radius * std::cos(angle + step) + pos[Coord::X], radius * std::sin(angle + step) + pos[Coord::Y], pos[Coord::Z] };
 
 		if (ImVec2 start, end; imRender.worldToScreen(startWorld, start) && imRender.worldToScreen(endWorld, end))
 		{
-			imRender.drawLine(start, end, Color::rainbowColor(interfaces::globalVars->m_curtime + angle, speed).getColorEditAlphaInt(linesAlpha), thickness);
-			imRender.drawTrianglePoly({ orignalW2S.x, orignalW2S.y + size }, start, end, Color::rainbowColor(interfaces::globalVars->m_curtime + angle, speed).getColorEditAlphaInt(trianglesAlpha));
+			imRender.drawLine(start, end,
+				Color::rainbowColor(interfaces::globalVars->m_curtime + angle, speed).getColorEditAlphaInt(linesAlpha), thickness);
+			imRender.drawTrianglePoly({ orignalW2S.x, orignalW2S.y + size }, start, end,
+				Color::rainbowColor(interfaces::globalVars->m_curtime + angle, speed).getColorEditAlphaInt(trianglesAlpha));
 		}
 	}
 }

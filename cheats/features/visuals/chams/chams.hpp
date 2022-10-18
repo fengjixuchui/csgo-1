@@ -2,6 +2,8 @@
 
 #include <classes/drawModel.hpp>
 #include <SDK/IVModelRender.hpp>
+#include <SDK/IVModelRender.hpp>
+#include <SDK/math/matrix.hpp>
 
 #include <string>
 #include <vector>
@@ -9,21 +11,20 @@
 class Color;
 struct DrawModelState_t;
 struct ModelRenderInfo_t;
-struct Matrix3x4;
 class Player_t;
 class IMaterial;
 class KeyValues;
-struct Matrix3x4;
 
-class Chams : public DrawModelType
+class Chams : protected DrawModelType
 {
 public:
 	Chams() :
 		DrawModelType{}
 	{}
 
-	virtual void init();
-	virtual void run(void* result, const DrawModelState_t& state, const ModelRenderInfo_t& info, Matrix3x4* matrix);
+protected:
+	virtual void run(void* result, const DrawModelState_t& state, const ModelRenderInfo_t& info, Matrix3x4* matrix) override;
+	virtual void init() override;
 private:
 	void overrideChams(int styles, bool ignore, bool wireframe, const Color& color, bool force = true, bool call = true);
 	class Mat_t
@@ -54,4 +55,4 @@ private:
 	Matrix3x4* m_matrix;
 };
 
-[[maybe_unused]] inline auto g_Chams = Chams{};
+GLOBAL_FEATURE(Chams);

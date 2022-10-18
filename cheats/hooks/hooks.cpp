@@ -46,6 +46,9 @@ hookHelper::tryHook(target, &hookStructName::hooked, \
 	HOOK_SAFE_VFUNC(interfaces::dx9Device, drawIndexedPrimitive);
 	HOOK_SAFE_VFUNC(interfaces::client, proxyCreateMove);
 	HOOK_SAFE_VFUNC(interfaces::client, frameStageNotify);
+	HOOK_SAFE_VFUNC(interfaces::client, levelInitPreEntity);
+	HOOK_SAFE_VFUNC(interfaces::client, levelInitPostEntity);
+	HOOK_SAFE_VFUNC(interfaces::client, levelShutdown);
 	HOOK_SAFE_VFUNC(interfaces::panel, paintTraverse);
 	HOOK_SAFE_VFUNC(interfaces::modelRender, drawModel);
 	HOOK_SAFE_VFUNC(interfaces::clientMode, overrideView);
@@ -58,13 +61,15 @@ hookHelper::tryHook(target, &hookStructName::hooked, \
 	HOOK_SAFE_VFUNC(interfaces::viewRender, renderView);
 	HOOK_SAFE_VFUNC(interfaces::viewRender, screen2DEffect);
 	HOOK_SAFE_VFUNC(interfaces::engine, isHltv);
+	HOOK_SAFE_VFUNC(interfaces::entList, addEnt);
+	HOOK_SAFE_VFUNC(interfaces::entList, removeEnt);
 
 #undef HOOK_SAFE_VFUNC
 #undef HOOK_SAFE_SIG
 
 	hookHelper::checkAllHooks();
 
-	console.log(TypeLogs::LOG_INFO, XOR("hooks success"));
+	LOG_INFO(XOR("hooks success"));
 }
 
 #pragma region wndproc
@@ -95,7 +100,7 @@ LRESULT __stdcall hooks::wndProcSys::wndproc(HWND hwnd, UINT message, WPARAM wpa
 		ImGui::CreateContext();
 		ImGui_ImplWin32_Init(hwnd);
 
-		console.log(TypeLogs::LOG_INFO, XOR("init for wndProc success"));
+		LOG_INFO(XOR("init for wndProc success"));
 
 		return true;
 	} ();
@@ -103,21 +108,16 @@ LRESULT __stdcall hooks::wndProcSys::wndproc(HWND hwnd, UINT message, WPARAM wpa
 	inputHandler.run(message, wparam);
 	x88menu.handleKeys();
 
-	auto& aimbotKey = config.getRef<Key>(vars.kAimbotKey);
-	aimbotKey.update();
-	auto& thirdpKey = config.getRef<Key>(vars.kThirdp);
-	thirdpKey.update();
-	auto& freeLookKey = config.getRef<Key>(vars.kFreeLook);
-	freeLookKey.update();
-	auto& freeCamKey = config.getRef<Key>(vars.kFreeCam);
-	freeCamKey.update();
-	auto& cameraKey = config.getRef<Key>(vars.kMirrorCam);
-	cameraKey.update();
+	vars::keys->aimbot.update();
+	vars::keys->thirdP.update();
+	vars::keys->freeLook.update();
+	vars::keys->freeCam.update();
+	vars::keys->mirrorCam.update();
 
-	if(config.get<Key>(vars.kMenu).isPressed())
+	if(vars::keys->menu.isPressed())
 		menu.changeActive();
 
-	if (config.get<Key>(vars.kConsoleLog).isPressed())
+	if (vars::keys->console.isPressed())
 		console.changeActiveLog();
 
 	interfaces::iSystem->enableInput(!menu.isMenuActive());

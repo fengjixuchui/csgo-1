@@ -3,13 +3,13 @@
 #include <span>
 #include <string>
 #include <vector>
-#include <locale>
 #include <format>
 #include <functional>
 
 #include <dependencies/ImGui/imgui.h>
 
 class CfgColor;
+class Color;
 class Key;
 using ImGuiColorEditFlags = int;
 
@@ -28,9 +28,9 @@ namespace ImGui
 	bool Combo(const char* label, int* item, std::span<const char*> arr, const int = -1);
 	bool Combo(const char* label, int* item, std::span<const std::string> arr, const int width = -1);
 	bool ListBox(const char* label, int* item, std::span<const char*> arr, const int heightItem = -1);
-	bool ListBox(const char* label, int* item, std::span<const std::string> arr, const int heightItem = -1);
-	// need return anything? maybe, but useless at all for my use
-	void MultiCombo(const char* label, const std::span<const char*>& names, std::vector<bool>& options, const float width = 140.0f);
+	bool ListBox(const char* label, int* item, std::span<const std::string> arr, const int heightItem = -1);	
+	template<typename T, size_t SIZE>
+	void MultiCombo(const char* label, const std::array<T, SIZE>& names, std::array<bool, SIZE>* options);
 	bool PopupButton(const char* label, const std::function<void()>& fun);
 
 	// from demo, slight edit, usage same as normal console.log
@@ -44,31 +44,50 @@ namespace ImGui
 		ExampleAppLog();
 		void Clear();
 
-		// edited 
-		template<typename... Args_t>
-		void AddLog(const std::string& fmt, const Args_t&... args);
+		void AddLog(const std::string& buffer);
 		void Draw(const char* title, bool* p_open = NULL);
 	};
 }
 
-template<typename... Args_t>
-void ImGui::ExampleAppLog::AddLog(const std::string& fmt, const Args_t&... args)
+IMGUI_IMPL_API void* ImGui_CreateTexture(const void* data, int width, int height);
+IMGUI_IMPL_API void	ImGui_DestroyTexture(void* texture);
+
+template<typename T, size_t SIZE>
+void ImGui::MultiCombo(const char* label, const std::array<T, SIZE>& names, std::array<bool, SIZE>* options)
 {
-	if (fmt.empty())
-		return;
+	bool check = names.size() != options->size() || !names.empty() || !options->empty();
+	assert(check && "given size of arrays args was not equal or one of them was empty");
 
-	std::string res;
+	size_t size = names.size(); // does not matter if you pass options size here
 
-	if constexpr (sizeof...(args) > 0)
-		res += std::vformat(std::locale(), fmt, std::make_format_args(args...));
-	else
-		res += fmt;
+	ImVector<T> actives = {};
+	for (size_t i = 0; const auto el : *options)
+	{
+		if (el) // if active selected
+			actives.push_back(names[i]);
 
-	int oldSize = Buf.size();
+		i++;
+	}
 
-	Buf.append(res.c_str());
+	std::string previewName = "";
+	for (int i = 0; const auto & el : actives)
+	{
+		previewName += el;
 
-	for (int newSize = Buf.size(); oldSize < newSize; oldSize++)
-		if (Buf[oldSize] == '\n')
-			LineOffsets.push_back(oldSize + 1);
+		if (i < actives.size() - 1) // add ", " on every option but not last
+			previewName += ", ";
+
+		i++;
+	}
+
+	if (ImGui::BeginCombo(label, previewName.c_str()))
+	{
+		for (size_t i = 0; i < size; i++) // creating view to make it "forced" to detect it as valid function args
+		{
+			if (ImGui::Selectable(std::string_view{ names[i] }.data(), options->at(i), ImGuiSelectableFlags_DontClosePopups))
+				options->at(i) = !options->at(i);
+		}
+
+		ImGui::EndCombo();
+	}
 }

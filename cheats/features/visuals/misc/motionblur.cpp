@@ -13,16 +13,11 @@
 #include <utilities/tools/tools.hpp>
 #include <gamememory/memory.hpp>
 
-void MotionBlur::init()
-{
-	
-}
-
 // 1:1 from https://github.com/perilouswithadollarsign/cstrike15_src/blob/f82112a2388b841d72cb62ca48ab1846dfcc11c8/game/client/viewpostprocess.cpp#L2996
 // with small reduce of code because we dont care for portal/ps3 stuff and also we dont care for detecting blur, but knowing it's enabled
 void MotionBlur::run(CViewSetup* view)
 {
-	if (!config.get<bool>(vars.bMotionBlur))
+	if (!vars::misc->motionBlur->enabled)
 		return;
 
 	if (!game::isAvailable())
@@ -48,13 +43,13 @@ void MotionBlur::run(CViewSetup* view)
 	{
 		float timeElapsed = interfaces::globalVars->m_realtime - m_motionHistory.m_lastTimeUpdate;
 
-		float currentPitch = view->m_angles.x;
+		float currentPitch = view->m_angles[Coord::X];
 		while (currentPitch > 180.0f)
 			currentPitch -= 360.0f;
 		while (currentPitch < -180.0f)
 			currentPitch += 360.0f;
 
-		float currentYaw = view->m_angles.y;
+		float currentYaw = view->m_angles[Coord::Y];
 		while (currentYaw > 180.0f)
 			currentYaw -= 360.0f;
 		while (currentYaw < -180.0f)
@@ -62,8 +57,8 @@ void MotionBlur::run(CViewSetup* view)
 
 		auto [currentForwardVec, currentSideVec, uselessVec ] = math::angleVectors(view->m_angles);
 
-		Vector currentPosition = view->m_origin;
-		Vector positionChange = m_motionHistory.m_previousPositon - currentPosition;
+		Vec3 currentPosition = view->m_origin;
+		Vec3 positionChange = m_motionHistory.m_previousPositon - currentPosition;
 
 		if ((positionChange.length() > 30.0f) && (timeElapsed >= 0.5f))
 		{
@@ -83,7 +78,7 @@ void MotionBlur::run(CViewSetup* view)
 			const float verticalFov = (view->m_aspectRatio <= 0.0f) ? (view->m_fov) : (view->m_fov / view->m_aspectRatio);
 			const float viewDotMotion = currentForwardVec.dot(positionChange);
 
-			if (config.get<bool>(vars.bMotionBlurForward))
+			if (vars::misc->motionBlur->forward)
 				m_motionBlurValues[2] = viewDotMotion;
 			else
 				m_motionBlurValues[2] = viewDotMotion * std::abs(currentForwardVec[2]);
@@ -127,12 +122,12 @@ void MotionBlur::run(CViewSetup* view)
 			else
 				m_motionBlurValues[2] = 0.0f;
 
-			m_motionBlurValues[2] = std::clamp((fabsf(m_motionBlurValues[2]) - config.get<float>(vars.fMotionBlurFallingMin)) / (config.get<float>(vars.fMotionBlurFallingMax) - config.get<float>(vars.fMotionBlurFallingMin)), 0.0f, 1.0f) * (m_motionBlurValues[2] >= 0.0f ? 1.0f : -1.0f);
+			m_motionBlurValues[2] = std::clamp((std::abs(m_motionBlurValues[2]) - vars::misc->motionBlur->fallingMin) / (vars::misc->motionBlur->fallingMax - vars::misc->motionBlur->fallingMin), 0.0f, 1.0f) * (m_motionBlurValues[2] >= 0.0f ? 1.0f : -1.0f);
 			m_motionBlurValues[2] /= 30.0f;
-			m_motionBlurValues[0] *= config.get<float>(vars.fMotionBlurRotationIntensity) * config.get<float>(vars.fMotionBlurGlobalStrength);
-			m_motionBlurValues[1] *= config.get<float>(vars.fMotionBlurRotationIntensity) * config.get<float>(vars.fMotionBlurGlobalStrength);
-			m_motionBlurValues[2] *= config.get<float>(vars.fMotionBlurFallingIntensity) * config.get<float>(vars.fMotionBlurGlobalStrength);
-			m_motionBlurValues[3] *= config.get<float>(vars.fMotionBlurRollIntensity) * config.get<float>(vars.fMotionBlurGlobalStrength);
+			m_motionBlurValues[0] *= vars::misc->motionBlur->rotationIntensity * vars::misc->motionBlur->strength;
+			m_motionBlurValues[1] *= vars::misc->motionBlur->rotationIntensity * vars::misc->motionBlur->strength;
+			m_motionBlurValues[2] *= vars::misc->motionBlur->fallingIntensity * vars::misc->motionBlur->strength;
+			m_motionBlurValues[3] *= vars::misc->motionBlur->rollIntensity * vars::misc->motionBlur->strength;
 
 			float slowFps = 30.0f;
 			float fastFps = 50.0f;
@@ -193,7 +188,7 @@ void MotionBlur::run(CViewSetup* view)
 
 void MotionBlur::render()
 {
-	if (!config.get<bool>(vars.bMotionBlur))
+	if (!vars::misc->motionBlur->enabled)
 		return;
 
 	if (!game::isAvailable())

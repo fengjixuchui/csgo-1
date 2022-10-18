@@ -3,7 +3,6 @@
 #include <SDK/CUserCmd.hpp>
 #include <SDK/ConVar.hpp>
 #include <SDK/ICvar.hpp>
-#include <SDK/math/Vector.hpp>
 #include <SDK/interfaces/interfaces.hpp>
 #include <game/game.hpp>
 #include <config/vars.hpp>
@@ -31,7 +30,7 @@ void Movement::run(CUserCmd* cmd)
 
 void Movement::bunnyhop(CUserCmd* cmd)
 {
-	if (!config.get<bool>(vars.bBunnyHop))
+	if (!vars::misc->bunnyHop->enabled)
 		return;
 
 	static bool skip = false;
@@ -43,7 +42,7 @@ void Movement::bunnyhop(CUserCmd* cmd)
 	if (auto renderMode = game::localPlayer->m_nRenderMode(); renderMode == NOCLIP || renderMode == LADDER)
 		return;
 
-	if (Random::getRandom<int>(0, 100) > config.get<int>(vars.iBunnyHopChance))
+	if (Random::getRandom<int>(0, 100) > vars::misc->bunnyHop->chance)
 		return;
 
 	const bool jump = cmd->m_buttons & IN_JUMP;
@@ -75,7 +74,7 @@ void Movement::bunnyhop(CUserCmd* cmd)
 
 void Movement::strafe(CUserCmd* cmd)
 {
-	const int mode = config.get<int>(vars.iAutoStrafe);
+	const int mode = vars::misc->bunnyHop->indexStrafe;
 	if (mode == E2T(MovementStraferMode::OFF))
 		return;
 
@@ -91,7 +90,7 @@ void Movement::strafe(CUserCmd* cmd)
 	if (!game::localPlayer->isMoving())
 		return;
 
-	const float speed = game::localPlayer->m_vecVelocity().length2D();
+	const float speed = game::localPlayer->m_vecVelocity().toVecPrev().length();
 
 	switch (mode)
 	{
@@ -143,9 +142,9 @@ void Movement::strafe(CUserCmd* cmd)
 
 			if (deltaAir != 0.0f)
 			{
-				const float yaw = math::DEG2RAD(cmd->m_viewangles.y);
+				const float yaw = math::DEG2RAD(cmd->m_viewangles[1]);
 				const auto velocityVec = game::localPlayer->m_vecVelocity();
-				const float velocityDirection = std::atan2(velocityVec.y, velocityVec.x) - yaw;
+				const float velocityDirection = std::atan2(velocityVec[1], velocityVec[0]) - yaw;
 				const float bestAngleMove = std::atan2(-cmd->m_sidemove, cmd->m_forwardmove);
 
 				auto deltaAngle = [](float first, float second) // used to point out angle to finally calculate, detection of dir
@@ -180,17 +179,17 @@ void Movement::strafe(CUserCmd* cmd)
 	}
 }
 
-void MovementFix::run(CUserCmd* cmd, const Vector& oldAngle)
+void MovementFix::run(CUserCmd* cmd, const Vec3& oldAngle)
 {
-	const Vector angle = { 0.0f, oldAngle.y, 0.0f };
+	const Vec3 angle = Vec3{ 0.0f, oldAngle[1], 0.0f };
 	auto [forward, right, up] = math::angleVectors(angle);
 	forward.normalize(); right.normalize(); // because those are not yet normalized
 
-	const Vector angleNow = { 0.0f, cmd->m_viewangles.y, 0.0f };
+	const Vec3 angleNow = Vec3{ 0.0f, cmd->m_viewangles[1], 0.0f };
 	auto [forwardNow, rightNow, upNow] = math::angleVectors(angleNow);
 
-	const Vector forwardOld = forward * cmd->m_forwardmove;
-	const Vector sideOld = right * cmd->m_sidemove;
+	const Vec3 forwardOld = forward * cmd->m_forwardmove;
+	const Vec3 sideOld = right * cmd->m_sidemove;
 
 	const float newForwardMove = forwardOld.dot(forwardNow) + sideOld.dot(forwardNow);
 	const float newSideMove = forwardOld.dot(rightNow) + sideOld.dot(rightNow);

@@ -8,14 +8,13 @@
 #include <utilities/tools/tools.hpp>
 #include <utilities/tools/wrappers.hpp>
 #include <utilities/inputSystem.hpp>
-
-#include <format>
+#include <dependencies/magic_enum.hpp>
 
 void X88Menu::draw()
 {
-	Vector2D man;
+	Vec2 man;
 
-	if (!config.get<bool>(vars.bMenuOpenedx88))
+	if (!vars::keys->enabledX88Menu)
 		return;
 
 	if (!m_inited)
@@ -59,8 +58,8 @@ void X88Menu::draw()
 		auto name = x88p.first;
 
 		auto vecSize = surfaceRender.getTextSizeXY(font, name);
-		auto vecX = static_cast<int>(vecSize.x);
-		auto vecY = static_cast<int>(vecSize.y);
+		auto vecX = static_cast<int>(vecSize[Coord::X]);
+		auto vecY = static_cast<int>(vecSize[Coord::Y]);
 
 		if (std::holds_alternative<bool*>(value))
 		{
@@ -94,22 +93,22 @@ void X88Menu::draw()
 
 void X88Menu::init()
 {
-	x88types.push(XOR("Chams"), &config.getRef<int>(vars.iChamsPlayers), 4);
-	x88types.push(XOR("ESP"), &config.getRef<bool>(vars.bEsp));
-	x88types.push(XOR("FOV"), &config.getRef<float>(vars.fFOV), { -50.0f, 50.0f} );
-	x88types.push(XOR("Backtrack"), &config.getRef<bool>(vars.bBacktrack));
-	x88types.push(XOR("Backtrack MS"), &config.getRef<float>(vars.fBacktrackTick), { 0.0f, 200.0f });
-	x88types.push(XOR("No Sky"), &config.getRef<bool>(vars.bRemoveSky));
-	x88types.push(XOR("2D Radar"), &config.getRef<bool>(vars.bRadar));
-	x88types.push(XOR("Bunnyhop"), &config.getRef<bool>(vars.bBunnyHop));
-	x88types.push(XOR("Autostrafe"), &config.getRef<int>(vars.iAutoStrafe), 3);
-	x88types.push(XOR("ThirdP"), &config.getRef<bool>(vars.bThirdp));
-	x88types.push(XOR("Draw Info"), &config.getRef<bool>(vars.bDrawMiscInfo));
+	x88types.push(XOR("Chams"), &vars::visuals->chams->indexPlayers, magic_enum::enum_count<ChamsType>() - 1);
+	x88types.push(XOR("ESP"), &vars::visuals->esp->boxes->enabled);
+	x88types.push(XOR("FOV"), &vars::misc->fov->value, { -50.0f, 50.0f} );
+	x88types.push(XOR("Backtrack"), &vars::backtrack->enabled);
+	x88types.push(XOR("Backtrack MS"), &vars::backtrack->time, { 0.0f, 200.0f });
+	x88types.push(XOR("No Sky"), &vars::visuals->world->sky->removeSky);
+	x88types.push(XOR("2D Radar"), &vars::misc->radar->enabled);
+	x88types.push(XOR("Bunnyhop"), &vars::misc->bunnyHop->enabled);
+	x88types.push(XOR("Autostrafe"), &vars::misc->bunnyHop->indexStrafe, magic_enum::enum_count<MovementStraferMode>() - 1);
+	x88types.push(XOR("ThirdP"), &vars::misc->thirdp->enabled);
+	x88types.push(XOR("Draw Info"), &vars::misc->info->enabled);
 
 	size_t longest = 0;
 	for (const auto& [x88p, limits] : x88types.getVars())
 	{
-		if (auto size = static_cast<size_t>(surfaceRender.getTextSizeXY(fonts::tahoma, x88p.first).x); size > longest)
+		if (auto size = static_cast<size_t>(surfaceRender.getTextSizeXY(fonts::tahoma, x88p.first)[Coord::X]); size > longest)
 			longest = size;
 	}
 	m_longestNameSize = longest;
@@ -120,13 +119,13 @@ void X88Menu::init()
 size_t X88Menu::addSpaces(const std::string& text)
 {
 	// 5px added to align them well for max size
-	auto size = (m_longestNameSize + 5) - surfaceRender.getTextSizeXY(fonts::tahoma, text).x;
+	auto size = (m_longestNameSize + 5) - surfaceRender.getTextSizeXY(fonts::tahoma, text)[Coord::X];
 	return static_cast<size_t>(size);
 }
 
 void X88Menu::handleKeys()
 {
-	if (!config.get<bool>(vars.bMenuOpenedx88))
+	if (!vars::keys->enabledX88Menu)
 		return;
 
 	if (!m_inited)

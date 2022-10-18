@@ -83,10 +83,10 @@ bool game::isChatOpen()
 	return chat->m_isOpen;
 }
 
-float game::getScaledFont(const Vector& source, const Vector& destination, const float division, const float min, const float max)
+float game::getScaledFont(const Vec3& source, const Vec3& destination, const float division, const float min, const float max)
 {
-	float dist = source.distTo(destination);
-	float fontSize = std::clamp(division / (dist / division), min, max);
+	const float dist = source.distTo(destination);
+	const float fontSize = std::clamp(division / (dist / division), min, max);
 	return fontSize;
 }
 
@@ -119,4 +119,12 @@ WeaponIndex game::getNadeByClass(int idx, Studiohdr_t* studio)
 	}
 
 	return WEAPON_NONE;
+}
+
+Vec3 game::getViewAngles()
+{
+	Vec3 ret;
+	interfaces::engine->getViewAngles(ret);
+
+	return ret;
 }
