@@ -1,0 +1,17 @@
+{
+  "dependencies": [
+    "lazy-importer",
+    "minhook",
+    "nlohmann-json",
+    {
+      "name": "imgui",
+      "features": [ "dx9-binding", "win32-binding", "freetype" ]
+    },
+    "implot",
+    "stb",
+    "magic-enum",
+    "discord-rpc",
+    "freetype",
+    "nanosvg"
+  ]
+}
